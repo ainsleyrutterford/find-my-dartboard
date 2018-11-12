@@ -22,7 +22,7 @@ using namespace cv;
 void detectAndDisplay( Mat frame );
 
 /** Global variables */
-String cascade_name = "frontalface.xml";
+String cascade_name = "dartcascade/cascade.xml";
 CascadeClassifier cascade;
 
 
@@ -39,7 +39,7 @@ int main( int argc, const char** argv )
 	detectAndDisplay( frame );
 
 	// 4. Save Result Image
-	imwrite( "detected.jpg", frame );
+	imwrite( "subtask2/detected.jpg", frame );
 
 	return 0;
 }
@@ -54,7 +54,7 @@ void detectAndDisplay( Mat frame )
 	cvtColor( frame, frame_gray, CV_BGR2GRAY );
 	equalizeHist( frame_gray, frame_gray );
 
-	// 2. Perform Viola-Jones Object Detection 
+	// 2. Perform Viola-Jones Object Detection
 	cascade.detectMultiScale( frame_gray, faces, 1.1, 1, 0|CV_HAAR_SCALE_IMAGE, Size(50, 50), Size(500,500) );
 
        // 3. Print number of Faces found
