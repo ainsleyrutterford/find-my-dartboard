@@ -4,7 +4,15 @@
 #include <sstream>
 #include <vector>
 #include <string>
+#include <stdio.h>
+#include "opencv2/objdetect/objdetect.hpp"
+#include "opencv2/opencv.hpp"
+#include "opencv2/core/core.hpp"
+#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+#include <opencv/cv.hpp>
 using namespace std;
+using namespace cv;
 
 //==========================================================
 
@@ -50,5 +58,13 @@ void write( const vector<vector<string> > &M )
 int main()
 {
    vector<vector<string> > M = readCSV( "data.csv" );
+   Mat frame = imread(M.at(0).at(0), CV_LOAD_IMAGE_COLOR);
+   int x = stoi(M.at(0).at(1));
+   int y = stoi(M.at(0).at(2));
+   int w = stoi(M.at(0).at(3));
+   int h = stoi(M.at(0).at(4));
+
+   rectangle(frame, Point(x, y), Point(x+w, y+h), Scalar(255, 255, 0), 2);
+   imwrite("testrect.jpg", frame);
    write( M );
 }
