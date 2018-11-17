@@ -19,7 +19,7 @@ using namespace std;
 using namespace cv;
 
 /** Function Headers */
-void detectAndDisplay( Mat frame );
+vector<Rect> detectAndDisplay( Mat frame );
 
 /** Global variables */
 String cascade_name = "dartcascade/cascade.xml";
@@ -27,25 +27,26 @@ CascadeClassifier cascade;
 
 
 /** @function main */
-int main( int argc, const char** argv )
+vector<Rect> facemain( const char* img_name )
 {
        // 1. Read Input Image
-	Mat frame = imread(argv[1], CV_LOAD_IMAGE_COLOR);
+	Mat frame = imread(img_name, CV_LOAD_IMAGE_COLOR);
 
-	// 2. Load the Strong Classifier in a structure called `Cascade'
-	if( !cascade.load( cascade_name ) ){ printf("--(!)Error loading\n"); return -1; };
+	// // 2. Load the Strong Classifier in a structure called `Cascade'
+	vector<Rect> detected;
+	if( !cascade.load( cascade_name ) ){ printf("--(!)Error loading\n"); return detected; };
 
-	// 3. Detect Faces and Display Result
-	detectAndDisplay( frame );
+	// // 3. Detect Faces and Display Result
+	detected = detectAndDisplay( frame );
 
 	// 4. Save Result Image
 	imwrite( "subtask2/detected.jpg", frame );
 
-	return 0;
+	return detected;
 }
 
 /** @function detectAndDisplay */
-void detectAndDisplay( Mat frame )
+vector<Rect> detectAndDisplay( Mat frame )
 {
 	std::vector<Rect> faces;
 	Mat frame_gray;
@@ -58,12 +59,15 @@ void detectAndDisplay( Mat frame )
 	cascade.detectMultiScale( frame_gray, faces, 1.1, 1, 0|CV_HAAR_SCALE_IMAGE, Size(50, 50), Size(500,500) );
 
        // 3. Print number of Faces found
-	std::cout << faces.size() << std::endl;
+	//std::cout << faces.size() << std::endl;
 
        // 4. Draw box around faces found
 	for( int i = 0; i < faces.size(); i++ )
 	{
 		rectangle(frame, Point(faces[i].x, faces[i].y), Point(faces[i].x + faces[i].width, faces[i].y + faces[i].height), Scalar( 0, 255, 0 ), 2);
 	}
+
+	return faces;
+
 
 }
