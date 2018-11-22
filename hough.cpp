@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <opencv/cv.hpp>
+#include <math.h>
 
 using namespace cv;
 
@@ -57,6 +58,30 @@ void convolution(cv::Mat &input, Mat &kernel, int size, cv::Mat &blurredOutput) 
 	}
 }
 
+void calc_gradient_mag(Mat &left, Mat &right, Mat &out) {
+
+  out.create(left.size(), left.type());
+
+  for (int y = 0; y < left.rows; y++) {
+    for (int x = 0; x < left.cols; x++) {
+      int result = (int) sqrt( pow((int)left.at<uchar>(y,x),2) + pow((int)right.at<uchar>(y,x),2) );
+      out.at<uchar>(y,x) = (uchar) result;
+    }
+  }
+}
+
+void calc_gradient_dir(Mat &left, Mat &right, Mat &out) {
+
+  out.create(left.size(), left.type());
+
+  for (int y = 0; y < left.rows; y++) {
+    for (int x = 0; x < left.cols; x++) {
+      double result = atan(((double)right.at<uchar>(y,x)) / ((double)left.at<uchar>(y,x))) - M_PI/2;
+      out.at<uchar>(y,x) = (uchar) result;
+    }
+  }
+}
+
 void sobel(Mat &image) {
   // // create the Gaussian kernel in 1D
   cv::Mat kX = cv::getGaussianKernel(3, -1);
@@ -68,12 +93,14 @@ void sobel(Mat &image) {
   Mat kernelX = (Mat_<double>(3,3) << -1, 0, 1, -2, 0, 2, -1, 0, 1);
   Mat kernelY = (Mat_<double>(3,3) << -1, -2, -1, 0, 0, 0, 1, 2, 1);
 
-  Mat outputX, outputY;
+  Mat outputX, outputY, gradient_mag, gradient_dir;
   convolution(image, kernelG, 3, image);
   convolution(image, kernelX, 3, outputX);
-  imwrite("outputX.jpg", outputX);
   convolution(image, kernelY, 3, outputY);
-  imwrite("outputY.jpg", outputY);
+  calc_gradient_mag(outputX, outputY, gradient_mag);
+  imwrite("outputMag.jpg", gradient_mag);
+  calc_gradient_dir(outputX, outputY, gradient_dir);
+  imwrite("outputDir.jpg", gradient_dir);
 }
 
 int main(int argc, char** argv) {
