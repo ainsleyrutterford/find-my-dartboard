@@ -64,10 +64,10 @@ void drawrect(vector<string> dart_box)  {
 }
 
 bool compareRect(Rect rect1, Rect rect2)  {
-    if(abs(rect1.x - rect2.x) > 75)  return false;
-    if(abs(rect1.y - rect2.y) > 75)  return false;
-    if(abs(rect1.height - rect2.height) > 75)  return false;
-    if(abs(rect1.width - rect2.width) > 75)  return false;
+    if(abs(rect1.x - rect2.x) > 25)  return false;
+    if(abs(rect1.y - rect2.y) > 25)  return false;
+    if(abs(rect1.height - rect2.height) > 50)  return false;
+    if(abs(rect1.width - rect2.width) > 50)  return false;
     return true;
 }
 

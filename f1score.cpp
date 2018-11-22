@@ -15,6 +15,7 @@ double f1score(double truePositives, double falsePostives, double falseNegatives
 // }
 
 double f1score (double truePositives, double falsePostives, double falseNegatives)  {
+    printf("TP: %f, FP: %f, FN: %f\n", truePositives, falsePostives, falseNegatives);
     double precision = truePositives/(truePositives+falsePostives);
     double recall = truePositives/(truePositives+falseNegatives);
     if( truePositives ==  0)  {
