@@ -8,16 +8,6 @@ void convolution(cv::Mat &input, Mat &kernel, int size, cv::Mat &blurredOutput) 
 	// intialise the output using the input
 	blurredOutput.create(input.size(), input.type());
 
-	// create the Gaussian kernel in 1D
-	// cv::Mat kX = cv::getGaussianKernel(size, -1);
-	// cv::Mat kY = cv::getGaussianKernel(size, -1);
-
-	// make it 2D multiply one by the transpose of the other
-	// cv::Mat kernel = kX * kY.t();
-
-	//CREATING A DIFFERENT IMAGE kernel WILL BE NEEDED
-	//TO PERFORM OPERATIONS OTHER THAN GUASSIAN BLUR!!!
-
 	// we need to create a padded version of the input
 	// or there will be border effects
 	int kernelRadiusX = ( kernel.size[0] - 1 ) / 2;
@@ -115,8 +105,6 @@ int main(int argc, char** argv) {
  }
 
  sobel(image);
-
- // imwrite("output.jpg", image);
 
  return 0;
 }

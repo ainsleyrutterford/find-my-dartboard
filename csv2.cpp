@@ -15,7 +15,6 @@ CascadeClassifier cascade;
 
 vector<vector<string> > readCSV(string filename) {
     vector<vector<string> > M;
-
     ifstream in(filename);
     string line;
     while (getline(in, line)) {                  // read a whole line of the file
@@ -32,7 +31,6 @@ vector<vector<string> > readCSV(string filename) {
 
 void write(const vector<vector<string> > &M) {
     const int w = 12;
-
     for (int i = 0; i < M.size(); i++) {
         for (int j = 0; j < M.at(i).size(); j++) {
             cout << setw(w) << M.at(i).at(j) << ' ';
@@ -62,18 +60,9 @@ vector<vector<Rect> > find_truth_rects(vector<vector<string> > data) {
 vector<Rect> detected_rects_per_image(Mat frame) {
     vector<Rect> faces;
     Mat frame_gray;
-
     cvtColor(frame, frame_gray, CV_BGR2GRAY);
 	equalizeHist(frame_gray, frame_gray);
-
-    cascade.detectMultiScale(frame_gray,
-                             faces,
-                             1.1,
-                             1,
-                             0|CV_HAAR_SCALE_IMAGE,
-                             Size(50, 50),
-                             Size(500,500));
-
+    cascade.detectMultiScale(frame_gray, faces, 1.1, 1, 0|CV_HAAR_SCALE_IMAGE, Size(50, 50), Size(500,500));
     return faces;
 }
 
@@ -95,11 +84,7 @@ void write_truth_images(vector<vector<string> > data) {
         Mat frame = imread(filename, CV_LOAD_IMAGE_COLOR);
         for (int j = 0; j < truth_rects.at(i).size(); j++) {
             Rect rect = truth_rects.at(i).at(j);
-            rectangle(frame,
-                      Point(rect.x, rect.y),
-                      Point(rect.x + rect.width, rect.y + rect.height),
-                      Scalar(255, 255, 0),
-                      2);
+            rectangle(frame, Point(rect.x, rect.y), Point(rect.x + rect.width, rect.y + rect.height), Scalar(255, 255, 0), 2);
         }
         imwrite("subtask2.1/truth" + data.at(i).at(0), frame);
     }
@@ -112,11 +97,7 @@ void write_detected_images(vector<vector<string> > data) {
         Mat frame = imread(filename, CV_LOAD_IMAGE_COLOR);
         for (int j = 0; j < detected_rects.at(i).size(); j++) {
             Rect rect = detected_rects.at(i).at(j);
-            rectangle(frame,
-                      Point(rect.x, rect.y),
-                      Point(rect.x + rect.width, rect.y + rect.height),
-                      Scalar(0, 255, 0),
-                      2);
+            rectangle(frame, Point(rect.x, rect.y), Point(rect.x + rect.width, rect.y + rect.height), Scalar(0, 255, 0), 2);
         }
         imwrite("subtask2.1/det" + data.at(i).at(0), frame);
     }
@@ -130,19 +111,11 @@ void write_both_images(vector<vector<string> > data) {
         Mat frame = imread(filename, CV_LOAD_IMAGE_COLOR);
         for (int j = 0; j < truth_rects.at(i).size(); j++) {
             Rect rect = truth_rects.at(i).at(j);
-            rectangle(frame,
-                      Point(rect.x, rect.y),
-                      Point(rect.x + rect.width, rect.y + rect.height),
-                      Scalar(255, 255, 0),
-                      2);
+            rectangle(frame, Point(rect.x, rect.y), Point(rect.x + rect.width, rect.y + rect.height), Scalar(255, 255, 0), 2);
         }
         for (int j = 0; j < detected_rects.at(i).size(); j++) {
             Rect rect = detected_rects.at(i).at(j);
-            rectangle(frame,
-                      Point(rect.x, rect.y),
-                      Point(rect.x + rect.width, rect.y + rect.height),
-                      Scalar(0, 255, 0),
-                      2);
+            rectangle(frame, Point(rect.x, rect.y), Point(rect.x + rect.width, rect.y + rect.height), Scalar(0, 255, 0), 2);
         }
         imwrite("subtask2.1/both" + data.at(i).at(0), frame);
     }
@@ -156,7 +129,7 @@ double percentage_overlap(Rect truth, Rect detected) {
     return overlap;
 }
 
-double f1score(double true_positives, double false_postives, double false_negatives)  {
+double f1score(double true_positives, double false_postives, double false_negatives) {
     double precision = true_positives / (true_positives + false_postives);
     double recall = true_positives / (true_positives + false_negatives);
     if (true_positives ==  0) return 0;
@@ -167,7 +140,7 @@ double f1score(double true_positives, double false_postives, double false_negati
 vector<vector<double> > calc_f1scores(vector<vector<Rect> > truth_rects, vector<vector<Rect> > detected_rects) {
     vector<vector<double> > f1scores;
     for (int i = 0; i < detected_rects.size(); i++) {
-        int true_positives = 0, matched = 0;
+        int true_positives = 0;
         for (int j = 0; j < truth_rects.at(i).size(); j++) {
             double max_overlap = 0.0;
             for (int k = 0; k < detected_rects.at(i).size(); k++) {
@@ -176,13 +149,10 @@ vector<vector<double> > calc_f1scores(vector<vector<Rect> > truth_rects, vector<
                 double overlap = percentage_overlap(truth, detected);
                 if (overlap > max_overlap) max_overlap = overlap;
             }
-            if (max_overlap >= 0.6) {
-                true_positives++;
-                matched++;
-            }
+            if (max_overlap >= 0.6) true_positives++;
         }
         int false_positives = detected_rects.at(i).size() - true_positives;
-        int false_negatives = truth_rects.at(i).size() - matched;
+        int false_negatives = truth_rects.at(i).size() - true_positives;
         double f1 = f1score(true_positives, false_positives, false_negatives);
         vector<double> row;
         row.push_back(true_positives);
@@ -203,31 +173,13 @@ void print_f1scores(vector<vector<double> > f1scores) {
 }
 
 int main() {
+    if (!cascade.load(cascade_name)) printf("--(!)Error loading\n");
     vector<vector<string> > data = readCSV("data.csv");
-    write(data);
-
     vector<vector<Rect> > truth_rects = find_truth_rects(data);
-    cout << "files: " << truth_rects.size() << "\n";
-    for (int i = 0; i < truth_rects.size(); i++) {
-        cout << "file " << i << " contains "
-        << truth_rects.at(i).size() << " rectangles.\n";
-    }
-
-    if (!cascade.load(cascade_name)){
-        printf("--(!)Error loading\n");
-    }
-
     vector<vector<Rect> > detected_rects = find_detected_rects(data);
-    cout << "files: " << detected_rects.size() << "\n";
-    for (int i = 0; i < detected_rects.size(); i++) {
-        cout << "file " << i << " contains "
-        << detected_rects.at(i).size() << " rectangles.\n";
-    }
-
+    vector<vector<double> > f1scores = calc_f1scores(truth_rects, detected_rects);
     write_truth_images(data);
     write_detected_images(data);
     write_both_images(data);
-
-    vector<vector<double> > f1scores = calc_f1scores(truth_rects, detected_rects);
     print_f1scores(f1scores);
 }
