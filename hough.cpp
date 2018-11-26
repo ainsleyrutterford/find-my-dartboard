@@ -112,8 +112,8 @@ void imageToDouble(Mat &input, Mat &out)  {
 
 void sobel(Mat &image, Mat &gradient_mag, Mat &gradient_dir) {
     // // create the Gaussian kernel in 1D
-    cv::Mat kX = cv::getGaussianKernel(10, -1);
-    cv::Mat kY = cv::getGaussianKernel(10, -1);
+    cv::Mat kX = cv::getGaussianKernel(15, -1);
+    cv::Mat kY = cv::getGaussianKernel(15, -1);
 
     // // make it 2D multiply one by the transpose of the other
     cv::Mat kernelG = kX * kY.t();
@@ -142,7 +142,14 @@ void sobel(Mat &image, Mat &gradient_mag, Mat &gradient_dir) {
     imwrite("outputDir.jpg", gradient_dir);
 }
 
-void houghTransform(Mat &image, Mat &gradient_mag, Mat &gradient_dir)  {
+void houghTransform(Mat &image, Mat &gradient_mag, Mat &gradient_dir, double thresh_val)  {
+		Mat thresh_mag, thresh_dir;
+		threshold(gradient_mag, thresh_mag, thresh_val, 255, THRESH_BINARY);
+		threshold(gradient_dir, thresh_dir, thresh_val, 255, THRESH_BINARY);
+    imwrite("threshMag.jpg", thresh_mag);
+    imwrite("threshDir.jpg", thresh_dir);
+
+
 
 }
 
@@ -158,7 +165,7 @@ int main(int argc, char** argv) {
     }
 		Mat grad_mag, grad_dir;
     sobel(image, grad_mag, grad_dir);
-		houghTransform(image, grad_mag, grad_dir);
+		houghTransform(image, grad_mag, grad_dir, 60);
 
     return 0;
 }
