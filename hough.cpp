@@ -6,7 +6,7 @@ using namespace cv;
 
 void convolution(cv::Mat &input, Mat &kernel, int size, cv::Mat &blurredOutput) {
     // intialise the output using the input
-    blurredOutput.create(input.size(), input.type());
+    blurredOutput.create(input.size(), CV_64F);
 
     // we need to create a padded version of the input
     // or there will be border effects
@@ -25,13 +25,13 @@ void convolution(cv::Mat &input, Mat &kernel, int size, cv::Mat &blurredOutput) 
             for( int m = -kernelRadiusX; m <= kernelRadiusX; m++ ) {
                 for( int n = -kernelRadiusY; n <= kernelRadiusY; n++ ) {
                     // find the correct indices we are using
-                    int imagex = i + m + kernelRadiusX;
-                    int imagey = j + n + kernelRadiusY;
-                    int kernelx = m + kernelRadiusX;
-                    int kernely = n + kernelRadiusY;
+                    double imagex = i + m + kernelRadiusX;
+                    double imagey = j + n + kernelRadiusY;
+                    double kernelx = m + kernelRadiusX;
+                    double kernely = n + kernelRadiusY;
 
                     // get the values from the padded image and the kernel
-                    int imageval = ( int ) paddedInput.at<uchar>( imagex, imagey );
+                    double imageval = ( double ) paddedInput.at<double>( imagex, imagey );
                     double kernalval = kernel.at<double>( kernelx, kernely );
 
                     // do the multiplication
@@ -39,39 +39,81 @@ void convolution(cv::Mat &input, Mat &kernel, int size, cv::Mat &blurredOutput) 
                 }
             }
             // set the output value as the sum of the convolution
-            blurredOutput.at<uchar>(i, j) = (uchar) sum;
+            blurredOutput.at<double>(i, j) = sum;
         }
     }
+}
+
+void normalize(Mat &M, Mat &out)  {
+    out.create(M.size(), CV_8U);
+
+
+	  double min = std::numeric_limits<double>::max();
+	  double max = -std::numeric_limits<double>::max();
+
+
+	  for (int i = 0; i < M.rows; i++ )  {
+			  for (int j = 0; j < M.cols; j++ )  {
+					  if ( M.at<double>(i, j) < min)  min = M.at<double>(i, j);
+						else if(M.at<double>(i, j) > max) max =  M.at<double>(i, j);
+				}
+		}
+		double range = max-min;
+		printf("Range %f %f %f\n", min, max, range);
+
+
+		for (int i = 0; i < M.rows; i++ )  {
+			  for (int j = 0; j < M.cols; j++ )  {
+						out.at<uchar>(i, j) = (uchar)((M.at<double>(i, j) - min)*255/range);
+				}
+		}
 }
 
 void calc_gradient_mag(Mat &left, Mat &right, Mat &out) {
 
-    out.create(left.size(), left.type());
+    out.create(left.size(), CV_8U);
+		Mat unNormalised; 
+		left.copyTo(unNormalised);
 
     for (int y = 0; y < left.rows; y++) {
         for (int x = 0; x < left.cols; x++) {
-            int result = (int) sqrt( pow((int)left.at<uchar>(y,x),2) + pow((int)right.at<uchar>(y,x),2) );
-            out.at<uchar>(y,x) = (uchar) result;
+            double result = sqrt( pow((int)left.at<double>(y,x),2) + (int)pow(right.at<double>(y,x),2) );
+            unNormalised.at<double>(y,x) = result;
         }
-    }
+		}
+		normalize(unNormalised, out);
 }
 
-void calc_gradient_dir(Mat &left, Mat &right, Mat &out) {
-
-    out.create(left.size(), left.type());
+void calc_gradient_dir(Mat &left, Mat &right, Mat &out)  {
+    out.create(left.size(), CV_8U);
+		Mat unNormalised; 
+		left.copyTo(unNormalised);
 
     for (int y = 0; y < left.rows; y++) {
         for (int x = 0; x < left.cols; x++) {
-            double result = atan(((double)right.at<uchar>(y,x)) / ((double)left.at<uchar>(y,x))) - M_PI/2;
-            out.at<uchar>(y,x) = (uchar) result;
+            double result = atan((right.at<double>(y,x)) / left.at<double>(y,x));
+            unNormalised.at<double>(y,x) = result;
         }
     }
+		normalize(unNormalised, out);
 }
 
-void sobel(Mat &image) {
+void imageToDouble(Mat &input, Mat &out)  {
+    out.create(input.size(), CV_64F);
+
+
+    for ( int i = 0; i < input.rows; i++ ) {
+        for( int j = 0; j < input.cols; j++ ) {
+						out.at<double>(i, j) = (double)input.at<uchar>(i, j);
+				}
+		}
+}
+
+
+void sobel(Mat &image, Mat &gradient_mag, Mat &gradient_dir) {
     // // create the Gaussian kernel in 1D
-    cv::Mat kX = cv::getGaussianKernel(3, -1);
-    cv::Mat kY = cv::getGaussianKernel(3, -1);
+    cv::Mat kX = cv::getGaussianKernel(10, -1);
+    cv::Mat kY = cv::getGaussianKernel(10, -1);
 
     // // make it 2D multiply one by the transpose of the other
     cv::Mat kernelG = kX * kY.t();
@@ -79,14 +121,29 @@ void sobel(Mat &image) {
     Mat kernelX = (Mat_<double>(3,3) << -1, 0, 1, -2, 0, 2, -1, 0, 1);
     Mat kernelY = (Mat_<double>(3,3) << -1, -2, -1, 0, 0, 0, 1, 2, 1);
 
-    Mat outputX, outputY, gradient_mag, gradient_dir;
-    convolution(image, kernelG, 3, image);
-    convolution(image, kernelX, 3, outputX);
-    convolution(image, kernelY, 3, outputY);
+    Mat outputX, outputY, doubleImage, blurredImage;
+
+		imageToDouble(image, doubleImage);
+		normalize(doubleImage, image);
+    imwrite("test.jpg", image);
+
+
+    convolution(doubleImage, kernelG, 3, blurredImage);
+    convolution(blurredImage, kernelX, 3, outputX);
+		Mat uX, uY;
+		normalize(outputX, uX);
+    imwrite("outputX.jpg", uX);
+    convolution(blurredImage, kernelY, 3, outputY);
+		normalize(outputY, uY);
+    imwrite("outputY.jpg", uY);    
     calc_gradient_mag(outputX, outputY, gradient_mag);
     imwrite("outputMag.jpg", gradient_mag);
     calc_gradient_dir(outputX, outputY, gradient_dir);
     imwrite("outputDir.jpg", gradient_dir);
+}
+
+void houghTransform(Mat &image, Mat &gradient_mag, Mat &gradient_dir)  {
+
 }
 
 int main(int argc, char** argv) {
@@ -99,8 +156,9 @@ int main(int argc, char** argv) {
         printf(" No image data \n ");
         return -1;
     }
-
-    sobel(image);
+		Mat grad_mag, grad_dir;
+    sobel(image, grad_mag, grad_dir);
+		houghTransform(image, grad_mag, grad_dir);
 
     return 0;
 }
