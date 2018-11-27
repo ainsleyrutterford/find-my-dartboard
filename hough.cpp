@@ -74,7 +74,8 @@ void normalize(Mat &M, Mat &out)  {
 
 void calc_gradient_mag(Mat &left, Mat &right, Mat &out) {
 
-    out.create(left.size(), CV_8U);
+    // out.create(left.size(), CV_8U);
+    out.create(left.size(), CV_64F);
 		Mat unNormalised;
 		left.copyTo(unNormalised);
 
@@ -84,13 +85,15 @@ void calc_gradient_mag(Mat &left, Mat &right, Mat &out) {
             unNormalised.at<double>(y,x) = result;
         }
 	}
-	normalize(unNormalised, out);
+    unNormalised.copyTo(out);
+	// normalize(unNormalised, out);
 }
 
 void calc_gradient_dir(Mat &left, Mat &right, Mat &out)  {
-    out.create(left.size(), CV_8U);
-		Mat unNormalised;
-		left.copyTo(unNormalised);
+    // out.create(left.size(), CV_8U);
+    out.create(left.size(), CV_64F);
+	Mat unNormalised;
+	left.copyTo(unNormalised);
 
     for (int y = 0; y < left.rows; y++) {
         for (int x = 0; x < left.cols; x++) {
@@ -98,7 +101,8 @@ void calc_gradient_dir(Mat &left, Mat &right, Mat &out)  {
             unNormalised.at<double>(y,x) = result;
         }
     }
-	normalize(unNormalised, out);
+    unNormalised.copyTo(out);
+	// normalize(unNormalised, out);
 }
 
 void imageToDouble(Mat &input, Mat &out)  {
@@ -143,19 +147,32 @@ void sobel(Mat &image, Mat &gradient_mag, Mat &gradient_dir) {
     calc_gradient_dir(outputX, outputY, gradient_dir);
 }
 
+void fullLine(cv::Mat &img, cv::Point a, cv::Point b, cv::Scalar color, double m) {
+     Point p(0,0), q(img.cols,img.rows);
+
+     p.y = -(a.x - p.x) * m + a.y;
+     q.y = -(b.x - q.x) * m + b.y;
+
+     line(img,p,q,color,1,8,0);
+}
+
 void houghTransform(Mat &image, Mat &gradient_mag, Mat &gradient_dir, double thresh_val)  {
     Mat gradient_thresh, double_mag, double_dir;
-    imageToDouble(gradient_mag, double_mag);
-    imageToDouble(gradient_dir, double_dir);
-    Mat new_gradient = double_mag.mul(double_dir);
+    // imageToDouble(gradient_mag, double_mag);
+    // imageToDouble(gradient_dir, double_dir);
+    Mat new_gradient = gradient_mag.mul(gradient_dir);
+    Mat normalized;
+    normalize(new_gradient, normalized);
     int min = round(sqrt(sqr(image.cols) + sqr(image.rows)));
-    Mat hough_space(Size(2 * min, 180), CV_64F, Scalar(0));
+    Mat hough_space(Size(360, 2 * min), CV_64F, Scalar(0));
     for (int y = 0; y < new_gradient.rows; y++) {
         for (int x = 0; x < new_gradient.cols; x++) {
-            if (new_gradient.at<double>(y, x) > 128) {
-                for (double t = 0; t < hough_space.rows; t++) {
-                    int p = round(x * cos(t * M_PI / 180) + y * sin(t * M_PI / 180)) + min;
-                    hough_space.at<double>(t, p) = hough_space.at<double>(t, p) + 1;
+            if (normalized.at<double>(y, x) > 128) {
+                for (double t = 0; t < hough_space.cols; t++) {
+                    if (abs((gradient_dir.at<double>(y, x) * 180 / M_PI) - t) < 2) {
+                        int p = round(x * cos(t * M_PI / 180) + y * sin(t * M_PI / 180)) + min;
+                        hough_space.at<double>(p, t) = hough_space.at<double>(p, t) + 1;
+                    }
                 }
             }
         }
@@ -163,6 +180,24 @@ void houghTransform(Mat &image, Mat &gradient_mag, Mat &gradient_dir, double thr
     Mat hough_out;
     normalize(hough_space, hough_out);
     imwrite("houghSpace.jpg", hough_out);
+
+    for (int p = 0; p < hough_out.rows; p++) {
+        for (int t = 0; t < hough_out.cols; t++) {
+            if (hough_out.at<uchar>(p, t) > 200) {
+                double m = - cos(t * M_PI / 180) / sin(t * M_PI / 180);
+                double c = (p - min) / sin(t * M_PI / 180);
+                Point p1(200, round(m * 200 + c));
+                Point p2(300, round(m * 300 + c));
+                std::cout << "p: " << (p - min) << " t: " << t << " m: " << m << " c: " << c
+                << " p1.x: " << p1.x << " p1.y: " << p1.y << " p2.x: " << p2.x << " p2.y: " << p2.y << "\n";
+
+                // line(image, p1, p2, Scalar(0, 255, 0), 2, 8, 0);
+                fullLine(image, p1, p2, Scalar(0, 255, 0), m);
+            }
+        }
+    }
+    imwrite("lines.jpg", image);
+
 }
 
 int main(int argc, char** argv) {
