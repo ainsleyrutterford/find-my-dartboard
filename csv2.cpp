@@ -6,6 +6,7 @@
 #include <string>
 #include <stdio.h>
 #include <opencv/cv.hpp>
+#include "hough.cpp"
 
 using namespace std;
 using namespace cv;
@@ -172,12 +173,48 @@ void print_f1scores(vector<vector<double> > f1scores) {
     }
 }
 
+Point intersection(int m0, int m1, int c0, int c1)  {
+    int x =(c1-c0)/(m0-m1);
+    int y = m0*x+c0;
+    return Point(x, y);
+}
+
+vector<Rect> filterRects(vector<Rect> detectedRects, vector<Circle> circles, vector<Line> lines)  {
+    vector<Rect> filteredRects1;
+    for (int i = 0; i < detectedRects.size(); i++)  {
+        for (int c=0; c < circles.size(); c++)  {
+            if (abs(detectedRects.at(i).x + detectedRects.at(i).width - circles.at(c).x) < 20 &&
+                abs(detectedRects.at(i).y + detectedRects.at(i).height - circles.at(c).y) < 20)  {
+                    filteredRects1.push_back(detectedRects.at(i));
+            }
+        }
+    }
+    //PARALLEL??
+    vector<Rect> filteredRects2;
+    for (int i = 0; i < filteredRects1.size(); i++)  {
+        for (int l=0; l < lines.size(); l++)  {
+            for (int l1=1; l1 < lines.size(); l1++)  {
+                if(l != l1 && filteredRects1.at(i).contains(
+                    intersection(lines.at(l).m,lines.at(l1).m, lines.at(l).c, lines.at(l1).c) ))  {
+                        filteredRects2.push_back(filteredRects1.at(i));
+                    }
+            }
+        }
+    }
+    return filteredRects2;
+}
+
 int main() {
     if (!cascade.load(cascade_name)) printf("--(!)Error loading\n");
     vector<vector<string> > data = readCSV("data.csv");
     vector<vector<Rect> > truth_rects = find_truth_rects(data);
     vector<vector<Rect> > detected_rects = find_detected_rects(data);
     vector<vector<double> > f1scores = calc_f1scores(truth_rects, detected_rects);
+    vector<Circle> circles = getCircles();
+    vector<Line> lines = getLines();
+    // vector<Circle> circles;
+    // vector<Line> lines;
+    //cout << lines->size() <<"\n";
     write_truth_images(data);
     write_detected_images(data);
     write_both_images(data);

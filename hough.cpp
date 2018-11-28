@@ -208,8 +208,8 @@ vector<Line> houghTransformLines(Mat &image, Mat &gradient_mag, Mat &gradient_di
                 double c = (p - min) / sin(t * M_PI / 180);
                 Point p1(200, round(m * 200 + c));
                 Point p2(300, round(m * 300 + c));
-                Line *line = new Line(m, c);
-                lines.push_back(*line);
+                Line line = Line(m, c);
+                lines.push_back(line);
                 // line(image, p1, p2, Scalar(0, 255, 0), 2, 8, 0);
                 fullLine(colour_image, p1, p2, Scalar(255, 255, 0), m);
             }
@@ -263,8 +263,8 @@ vector<Circle> HoughTransformCircles(Mat &image, Mat &gradient_mag, Mat &gradien
             for (int r = 0; r < rLen; r++)  {
                 
                 if (houghSpace[y][x][r] > 30)  {
-                    Circle *temp  = new Circle(x, y, r);
-                    circles.push_back(*temp);
+                    Circle temp  = Circle(x, y, r);
+                    circles.push_back(temp);
                     circle(image, Point(x, y), r, Scalar(255, 255, 255), 2, 0);
                 }
             }
@@ -276,14 +276,23 @@ vector<Circle> HoughTransformCircles(Mat &image, Mat &gradient_mag, Mat &gradien
     return circles;    
 }
 
-int getCirclesLines(vector<Circle> *circles, vector<Line> *lines) {
+vector<Circle> getCircles() {
 
     Mat image;
     image = imread("darts/dart.bmp", IMREAD_GRAYSCALE);
 	Mat grad_mag, grad_dir;
     sobel(image, grad_mag, grad_dir);
-	*circles = HoughTransformCircles(image, grad_mag, grad_dir, 230);
-    *lines = houghTransformLines(image, grad_mag, grad_dir, 230);
+	return HoughTransformCircles(image, grad_mag, grad_dir, 230);
 
-    return 0;
+ 
+}
+vector<Line> getLines() {
+
+    Mat image;
+    image = imread("darts/dart.bmp", IMREAD_GRAYSCALE);
+	Mat grad_mag, grad_dir;
+    sobel(image, grad_mag, grad_dir);
+    return houghTransformLines(image, grad_mag, grad_dir, 230);
+
+ 
 }
