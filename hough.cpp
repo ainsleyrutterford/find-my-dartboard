@@ -119,8 +119,8 @@ void imageToDouble(Mat &input, Mat &out)  {
 
 void sobel(Mat &image, Mat &gradient_mag, Mat &gradient_dir) {
     // // create the Gaussian kernel in 1D
-    cv::Mat kX = cv::getGaussianKernel(15, -1);
-    cv::Mat kY = cv::getGaussianKernel(15, -1);
+    cv::Mat kX = cv::getGaussianKernel(3, -1);
+    cv::Mat kY = cv::getGaussianKernel(3, -1);
 
     // // make it 2D multiply one by the transpose of the other
     cv::Mat kernelG = kX * kY.t();
@@ -137,14 +137,18 @@ void sobel(Mat &image, Mat &gradient_mag, Mat &gradient_dir) {
 
     convolution(doubleImage, kernelG, 3, blurredImage);
     convolution(blurredImage, kernelX, 3, outputX);
-	Mat uX, uY;
+	Mat uX, uY, uGMag, uGDir;
 	normalize(outputX, uX);
     imwrite("outputX.jpg", uX);
     convolution(blurredImage, kernelY, 3, outputY);
 	normalize(outputY, uY);
     imwrite("outputY.jpg", uY);
     calc_gradient_mag(outputX, outputY, gradient_mag);
+    normalize(gradient_mag, uGMag);
+    imwrite("outputMag.jpg", uGMag);
     calc_gradient_dir(outputX, outputY, gradient_dir);
+    normalize(gradient_dir, uGDir);
+    imwrite("outputDir.jpg", uGDir);
 }
 
 void fullLine(cv::Mat &img, cv::Point a, cv::Point b, cv::Scalar color, double m) {
@@ -160,16 +164,21 @@ void houghTransform(Mat &image, Mat &gradient_mag, Mat &gradient_dir, double thr
     Mat gradient_thresh, double_mag, double_dir;
     // imageToDouble(gradient_mag, double_mag);
     // imageToDouble(gradient_dir, double_dir);
-    Mat new_gradient = gradient_mag.mul(gradient_dir);
+    // Mat new_gradient = gradient_mag.mul(gradient_dir);
+    Mat new_gradient = gradient_mag;
+    Mat uNG;
+    normalize(new_gradient, uNG);
+    imwrite("outputNG.jpg", uNG);
     Mat normalized;
     normalize(new_gradient, normalized);
     int min = round(sqrt(sqr(image.cols) + sqr(image.rows)));
     Mat hough_space(Size(360, 2 * min), CV_64F, Scalar(0));
     for (int y = 0; y < new_gradient.rows; y++) {
         for (int x = 0; x < new_gradient.cols; x++) {
-            if (normalized.at<double>(y, x) > 128) {
+            if (normalized.at<uchar>(y, x) > 128) {
                 for (double t = 0; t < hough_space.cols; t++) {
-                    if (abs((gradient_dir.at<double>(y, x) * 180 / M_PI) - t) < 2) {
+                    if ((gradient_dir.at<double>(y, x) * 180 / M_PI) - 360 <= t &&
+                        (gradient_dir.at<double>(y, x) * 180 / M_PI) + 360 >= t) {
                         int p = round(x * cos(t * M_PI / 180) + y * sin(t * M_PI / 180)) + min;
                         hough_space.at<double>(p, t) = hough_space.at<double>(p, t) + 1;
                     }
@@ -181,9 +190,12 @@ void houghTransform(Mat &image, Mat &gradient_mag, Mat &gradient_dir, double thr
     normalize(hough_space, hough_out);
     imwrite("houghSpace.jpg", hough_out);
 
+    Mat colour_image;
+    cvtColor( image, colour_image, CV_GRAY2BGR );
+
     for (int p = 0; p < hough_out.rows; p++) {
         for (int t = 0; t < hough_out.cols; t++) {
-            if (hough_out.at<uchar>(p, t) > 200) {
+            if (hough_out.at<uchar>(p, t) > 128) {
                 double m = - cos(t * M_PI / 180) / sin(t * M_PI / 180);
                 double c = (p - min) / sin(t * M_PI / 180);
                 Point p1(200, round(m * 200 + c));
@@ -192,11 +204,11 @@ void houghTransform(Mat &image, Mat &gradient_mag, Mat &gradient_dir, double thr
                 << " p1.x: " << p1.x << " p1.y: " << p1.y << " p2.x: " << p2.x << " p2.y: " << p2.y << "\n";
 
                 // line(image, p1, p2, Scalar(0, 255, 0), 2, 8, 0);
-                fullLine(image, p1, p2, Scalar(0, 255, 0), m);
+                fullLine(colour_image, p1, p2, Scalar(255, 255, 0), m);
             }
         }
     }
-    imwrite("lines.jpg", image);
+    imwrite("lines.jpg", colour_image);
 
 }
 
