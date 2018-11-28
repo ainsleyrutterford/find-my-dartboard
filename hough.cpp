@@ -1,11 +1,18 @@
 #include <stdio.h>
 #include <opencv/cv.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <math.h>
+#include <string>
 #include <iostream>
+#include "circle.cpp"
+#include "Line.cpp"
 
 #define sqr(x)((x)*(x))
 
 using namespace cv;
+using namespace std;
 
 void convolution(cv::Mat &input, Mat &kernel, int size, cv::Mat &blurredOutput) {
     // intialise the output using the input
@@ -160,7 +167,7 @@ void fullLine(cv::Mat &img, cv::Point a, cv::Point b, cv::Scalar color, double m
      line(img,p,q,color,1,8,0);
 }
 
-void houghTransformLines(Mat &image, Mat &gradient_mag, Mat &gradient_dir, double thresh_val)  {
+vector<Line> houghTransformLines(Mat &image, Mat &gradient_mag, Mat &gradient_dir, double thresh_val)  {
     Mat gradient_thresh, double_mag, double_dir;
     // imageToDouble(gradient_mag, double_mag);
     // imageToDouble(gradient_dir, double_dir);
@@ -193,7 +200,7 @@ void houghTransformLines(Mat &image, Mat &gradient_mag, Mat &gradient_dir, doubl
 
     Mat colour_image;
     cvtColor( image, colour_image, CV_GRAY2BGR );
-
+    vector<Line> lines;
     for (int p = 0; p < hough_out.rows; p++) {
         for (int t = 0; t < hough_out.cols; t++) {
             if (hough_out.at<uchar>(p, t) > 128) {
@@ -201,15 +208,15 @@ void houghTransformLines(Mat &image, Mat &gradient_mag, Mat &gradient_dir, doubl
                 double c = (p - min) / sin(t * M_PI / 180);
                 Point p1(200, round(m * 200 + c));
                 Point p2(300, round(m * 300 + c));
-                std::cout << "p: " << (p - min) << " t: " << t << " m: " << m << " c: " << c
-                << " p1.x: " << p1.x << " p1.y: " << p1.y << " p2.x: " << p2.x << " p2.y: " << p2.y << "\n";
-
+                Line *line = new Line(m, c);
+                lines.push_back(*line);
                 // line(image, p1, p2, Scalar(0, 255, 0), 2, 8, 0);
                 fullLine(colour_image, p1, p2, Scalar(255, 255, 0), m);
             }
         }
     }
     imwrite("lines.jpg", colour_image);
+    return lines;
 
 }
 
@@ -229,7 +236,7 @@ int *** allocate3DArray(int y, int x, int r)  {
 }
 
 
-void HoughTransformCircles(Mat &image, Mat &gradient_mag, Mat &gradient_dir, double thresh_val)  {
+vector<Circle> HoughTransformCircles(Mat &image, Mat &gradient_mag, Mat &gradient_dir, double thresh_val)  {
     int rLen = image.rows/2;
     int ***houghSpace = allocate3DArray(image.rows, image.cols, rLen);
     for (int y = 0; y < image.rows; y++)    {
@@ -250,13 +257,15 @@ void HoughTransformCircles(Mat &image, Mat &gradient_mag, Mat &gradient_dir, dou
         }
     }
     printf("Ainsley made me..fs\n");
+    vector<Circle> circles;
     for (int y = 0; y < image.rows; y++)    {
         for (int x = 0; x < image.cols; x++)  {
             for (int r = 0; r < rLen; r++)  {
                 
                 if (houghSpace[y][x][r] > 30)  {
+                    Circle *temp  = new Circle(x, y, r);
+                    circles.push_back(*temp);
                     circle(image, Point(x, y), r, Scalar(255, 255, 255), 2, 0);
-                    printf("x: %d y: %d r: %d\n", x, y, r);
                 }
             }
         }
@@ -264,23 +273,17 @@ void HoughTransformCircles(Mat &image, Mat &gradient_mag, Mat &gradient_dir, dou
 
     imwrite("circles.jpg", image);
 
-
-    
+    return circles;    
 }
 
-int main(int argc, char** argv) {
-    char* imageName = argv[1];
+int getCirclesLines(vector<Circle> *circles, vector<Line> *lines) {
 
     Mat image;
-    image = imread(imageName, IMREAD_GRAYSCALE);
-
-    if (argc != 2 || !image.data) {
-        printf(" No image data \n ");
-        return -1;
-    }
+    image = imread("darts/dart.bmp", IMREAD_GRAYSCALE);
 	Mat grad_mag, grad_dir;
     sobel(image, grad_mag, grad_dir);
-	HoughTransformCircles(image, grad_mag, grad_dir, 230);
+	*circles = HoughTransformCircles(image, grad_mag, grad_dir, 230);
+    *lines = houghTransformLines(image, grad_mag, grad_dir, 230);
 
     return 0;
 }
