@@ -160,7 +160,7 @@ void fullLine(cv::Mat &img, cv::Point a, cv::Point b, cv::Scalar color, double m
      line(img,p,q,color,1,8,0);
 }
 
-void houghTransform(Mat &image, Mat &gradient_mag, Mat &gradient_dir, double thresh_val)  {
+void houghTransformLines(Mat &image, Mat &gradient_mag, Mat &gradient_dir, double thresh_val)  {
     Mat gradient_thresh, double_mag, double_dir;
     // imageToDouble(gradient_mag, double_mag);
     // imageToDouble(gradient_dir, double_dir);
@@ -172,16 +172,17 @@ void houghTransform(Mat &image, Mat &gradient_mag, Mat &gradient_dir, double thr
     Mat normalized;
     normalize(new_gradient, normalized);
     int min = round(sqrt(sqr(image.cols) + sqr(image.rows)));
-    Mat hough_space(Size(360, 2 * min), CV_64F, Scalar(0));
+    Mat hough_space(Size(360,  min), CV_64F, Scalar(0));
     for (int y = 0; y < new_gradient.rows; y++) {
         for (int x = 0; x < new_gradient.cols; x++) {
             if (normalized.at<uchar>(y, x) > 128) {
                 for (double t = 0; t < hough_space.cols; t++) {
-                    if ((gradient_dir.at<double>(y, x) * 180 / M_PI) - 360 <= t &&
-                        (gradient_dir.at<double>(y, x) * 180 / M_PI) + 360 >= t) {
-                        int p = round(x * cos(t * M_PI / 180) + y * sin(t * M_PI / 180)) + min;
-                        hough_space.at<double>(p, t) = hough_space.at<double>(p, t) + 1;
-                    }
+                    // if (gradient_dir.at<double>(y, x) * 180 / M_PI + 90 - 1 <= t &&
+                    //     (gradient_dir.at<double>(y, x) * 180 / M_PI) +90 + 1 >= t) {
+                        
+                    // }
+                    int p = (int)(x * cos(t * M_PI / 180) + y * sin(t * M_PI / 180)) + min;
+                    hough_space.at<double>(p, t) = hough_space.at<double>(p, t) + 1;
                 }
             }
         }
@@ -212,6 +213,61 @@ void houghTransform(Mat &image, Mat &gradient_mag, Mat &gradient_dir, double thr
 
 }
 
+int *** allocate3DArray(int y, int x, int r)  {
+    int ***array = (int***)malloc(sizeof(int**)*y);
+    for (int i = 0; i < y; i++)  {
+        array[i] = (int**)malloc(sizeof(int*)*x);
+        for (int j = 0; j < x; j++)  {
+            array[i][j] = (int*)malloc(sizeof(int)*r);
+            for(int k = 0; k < r; k++) {
+                array[i][j][k] = 0;
+            }
+        }
+    }
+    return array;
+
+}
+
+
+void HoughTransformCircles(Mat &image, Mat &gradient_mag, Mat &gradient_dir, double thresh_val)  {
+    int rLen = image.rows/2;
+    int ***houghSpace = allocate3DArray(image.rows, image.cols, rLen);
+    for (int y = 0; y < image.rows; y++)    {
+        for (int x = 0; x < image.cols; x++)  {
+            for (int r = 0; r < rLen; r++)  {
+                int x0 = x - (int)(r*cos(gradient_dir.at<double>(y, x)));
+                int y0 = y - (int)(r*sin(gradient_dir.at<double>(y, x)));
+                if(x0 >= 0 && x0 < image.cols && y0 >= 0 && y0 < image.rows )  {
+                    houghSpace[y0][x0][r]++; 
+                }
+                x0 = x + (int)(r*cos(gradient_dir.at<double>(y, x)));
+                y0 = y + (int)(r*sin(gradient_dir.at<double>(y, x)));
+                if(x0 >= 0 && x0 < image.cols && y0 >= 0 && y0 < image.rows )  {
+                    houghSpace[y0][x0][r]++; 
+                }
+            
+            }
+        }
+    }
+    printf("Ainsley made me..fs\n");
+    for (int y = 0; y < image.rows; y++)    {
+        for (int x = 0; x < image.cols; x++)  {
+            for (int r = 0; r < rLen; r++)  {
+                
+                if (houghSpace[y][x][r] > 30)  {
+                    circle(image, Point(x, y), r, Scalar(255, 255, 255), 2, 0);
+                    printf("x: %d y: %d r: %d\n", x, y, r);
+                }
+            }
+        }
+    }
+
+    imwrite("circles.jpg", image);
+
+
+    
+}
+
 int main(int argc, char** argv) {
     char* imageName = argv[1];
 
@@ -224,7 +280,7 @@ int main(int argc, char** argv) {
     }
 	Mat grad_mag, grad_dir;
     sobel(image, grad_mag, grad_dir);
-	houghTransform(image, grad_mag, grad_dir, 230);
+	HoughTransformCircles(image, grad_mag, grad_dir, 230);
 
     return 0;
 }
