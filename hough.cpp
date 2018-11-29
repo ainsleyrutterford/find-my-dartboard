@@ -104,7 +104,7 @@ void calc_gradient_dir(Mat &left, Mat &right, Mat &out)  {
 
     for (int y = 0; y < left.rows; y++) {
         for (int x = 0; x < left.cols; x++) {
-            double result = atan((right.at<double>(y,x)) / left.at<double>(y,x));
+            double result = atan2((right.at<double>(y,x)) , left.at<double>(y,x));
             unNormalised.at<double>(y,x) = result;
         }
     }
@@ -180,12 +180,20 @@ vector<Line> houghTransformLines(string imgName, Mat &gradient_mag, Mat &gradien
         for (int x = 0; x < new_gradient.cols; x++) {
             if (normalized.at<uchar>(y, x) > 128) {
                 for (double t = 0; t < hough_space.cols; t++) {
-                    // if (gradient_dir.at<double>(y, x) * 180 / M_PI + 90 - 1 <= t &&
-                    //     (gradient_dir.at<double>(y, x) * 180 / M_PI) +90 + 1 >= t) {
+                    double angle_rad1 = gradient_dir.at<double>(y, x)+2*M_PI;
+                    double angle_rad2 = gradient_dir.at<double>(y, x) + M_PI;
+                    if(angle_rad1 >= 2*M_PI) angle_rad1 -= 2*M_PI;
 
-                    // }
-                    int p = (int)(x * cos(t * M_PI / 180) + y * sin(t * M_PI / 180)) + min;
-                    hough_space.at<double>(p, t) = hough_space.at<double>(p, t) + 1;
+                    if (abs(angle_rad1*180/M_PI - t)  <= 0.5) {
+                        int p = (int)(x * cos(t*M_PI/180) + y * sin(t*M_PI/180)) + min;
+                        hough_space.at<double>(p, t) = hough_space.at<double>(p, t) + 1;
+                    }
+                    if (abs(angle_rad2*180/M_PI - t)  <= 0.5) {
+                        int p = (int)(x * cos(t*M_PI/180) + y * sin(t*M_PI/180)) + min;
+                        hough_space.at<double>(p, t) = hough_space.at<double>(p, t) + 1;
+                    }
+
+
                 }
             }
         }
@@ -201,7 +209,7 @@ vector<Line> houghTransformLines(string imgName, Mat &gradient_mag, Mat &gradien
     int count = 0;
     for (int p = 0; p < hough_out.rows; p++) {
         for (int t = 0; t < hough_out.cols; t++) {
-            if (hough_out.at<uchar>(p, t) > 128) {
+            if (hough_out.at<uchar>(p, t) > 50) {
                 double m = - cos(t * M_PI / 180) / sin(t * M_PI / 180);
                 double c = (p - min) / sin(t * M_PI / 180);
                 Point p1(200, round(m * 200 + c));
@@ -273,8 +281,6 @@ vector<Circle> HoughTransformCircles(string imgName, Mat &gradient_mag, Mat &gra
     }
     printf("In circles\n");
     vector<Circle> circles;
-
-    cout<<circles.capacity()<<std::endl;
     for (int y = 0; y < image.rows; y++)    {
         for (int x = 0; x < image.cols; x++)  {
             for (int r = 0; r < rLen; r++)  {
@@ -286,11 +292,26 @@ vector<Circle> HoughTransformCircles(string imgName, Mat &gradient_mag, Mat &gra
             }
         }
     }
+
+    //Filter similar circles
+    vector<Circle> filterCircles;
+    if(circles.size() != 0)  filterCircles.push_back(circles.at(0));
+    for (int c = 1; c < circles.size(); c++)  {
+        bool similar = false;
+
+        for (int fc = 0; fc < filterCircles.size(); fc++)  {
+            if( circles.at(c).isSimilarTo(filterCircles.at(fc)))  {
+                similar = true;
+            }
+        }
+        if (!similar)   filterCircles.push_back(circles.at(c));
+    }
+
     free3d(houghSpace, image.rows, image.cols, rLen);
     imwrite("circles.jpg", image);
     printf("Done circles\n");
 
-    return circles;
+    return filterCircles;
 }
 
 
