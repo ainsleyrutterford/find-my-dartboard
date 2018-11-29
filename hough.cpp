@@ -167,7 +167,9 @@ void fullLine(cv::Mat &img, cv::Point a, cv::Point b, cv::Scalar color, double m
      line(img,p,q,color,1,8,0);
 }
 
-vector<Line> houghTransformLines(Mat &image, Mat &gradient_mag, Mat &gradient_dir, double thresh_val)  {
+vector<Line> houghTransformLines(string imgName, Mat &gradient_mag, Mat &gradient_dir, double thresh_val)  {
+    Mat image = imread(imgName, IMREAD_GRAYSCALE);
+
     Mat gradient_thresh, double_mag, double_dir;
     // imageToDouble(gradient_mag, double_mag);
     // imageToDouble(gradient_dir, double_dir);
@@ -197,10 +199,13 @@ vector<Line> houghTransformLines(Mat &image, Mat &gradient_mag, Mat &gradient_di
     Mat hough_out;
     normalize(hough_space, hough_out);
     imwrite("houghSpace.jpg", hough_out);
+    printf("In lines\n");
 
     Mat colour_image;
     cvtColor( image, colour_image, CV_GRAY2BGR );
     vector<Line> lines;
+    lines.reserve(100);
+    int count = 0;
     for (int p = 0; p < hough_out.rows; p++) {
         for (int t = 0; t < hough_out.cols; t++) {
             if (hough_out.at<uchar>(p, t) > 128) {
@@ -209,13 +214,17 @@ vector<Line> houghTransformLines(Mat &image, Mat &gradient_mag, Mat &gradient_di
                 Point p1(200, round(m * 200 + c));
                 Point p2(300, round(m * 300 + c));
                 Line line = Line(m, c);
-                lines.push_back(line);
+                if(lines.size() < lines.capacity()) lines.push_back(line);
+                else cout << "lines full\n";
+
                 // line(image, p1, p2, Scalar(0, 255, 0), 2, 8, 0);
                 fullLine(colour_image, p1, p2, Scalar(255, 255, 0), m);
             }
         }
     }
     imwrite("lines.jpg", colour_image);
+    printf("Done lines\n");
+
     return lines;
 
 }
@@ -236,7 +245,21 @@ int *** allocate3DArray(int y, int x, int r)  {
 }
 
 
-vector<Circle> HoughTransformCircles(Mat &image, Mat &gradient_mag, Mat &gradient_dir, double thresh_val)  {
+void free3d(int ***arr, int y, int x, int r)  {
+    for (int i = 0; i < y; i++)  {
+        for (int j = 0; j < x; j++)  {
+            free(arr[i][j]);
+        }
+        free(arr[i]);
+
+    }
+    free(arr);
+
+}
+
+vector<Circle> HoughTransformCircles(string imgName, Mat &gradient_mag, Mat &gradient_dir, double thresh_val)  {
+    Mat image = imread(imgName, IMREAD_GRAYSCALE);
+
     int rLen = image.rows/2;
     int ***houghSpace = allocate3DArray(image.rows, image.cols, rLen);
     for (int y = 0; y < image.rows; y++)    {
@@ -256,43 +279,34 @@ vector<Circle> HoughTransformCircles(Mat &image, Mat &gradient_mag, Mat &gradien
             }
         }
     }
-    printf("Ainsley made me..fs\n");
+    printf("In circles\n");
     vector<Circle> circles;
+    circles.reserve(100);
+
+    cout<<circles.capacity()<<std::endl;
     for (int y = 0; y < image.rows; y++)    {
         for (int x = 0; x < image.cols; x++)  {
             for (int r = 0; r < rLen; r++)  {
                 
-                if (houghSpace[y][x][r] > 30)  {
+                if (houghSpace[y][x][r] > 45)  {
                     Circle temp  = Circle(x, y, r);
-                    circles.push_back(temp);
+                    if(circles.size() < circles.capacity() ) circles.push_back(temp);
+                    else cout << "circles full\n";
                     circle(image, Point(x, y), r, Scalar(255, 255, 255), 2, 0);
                 }
             }
         }
     }
-
+    free3d(houghSpace, image.rows, image.cols, rLen);
     imwrite("circles.jpg", image);
+    printf("Done circles\n");
 
     return circles;    
 }
 
-vector<Circle> getCircles() {
 
-    Mat image;
-    image = imread("darts/dart.bmp", IMREAD_GRAYSCALE);
-	Mat grad_mag, grad_dir;
+void getGradients(string imgName, Mat &grad_mag, Mat &grad_dir)  {
+    Mat image = imread(imgName, IMREAD_GRAYSCALE);
     sobel(image, grad_mag, grad_dir);
-	return HoughTransformCircles(image, grad_mag, grad_dir, 230);
-
- 
 }
-vector<Line> getLines() {
 
-    Mat image;
-    image = imread("darts/dart.bmp", IMREAD_GRAYSCALE);
-	Mat grad_mag, grad_dir;
-    sobel(image, grad_mag, grad_dir);
-    return houghTransformLines(image, grad_mag, grad_dir, 230);
-
- 
-}

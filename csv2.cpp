@@ -174,49 +174,83 @@ void print_f1scores(vector<vector<double> > f1scores) {
 }
 
 Point intersection(int m0, int m1, int c0, int c1)  {
+    if(m0-m1==0)  return Point(-1, -1);
     int x =(c1-c0)/(m0-m1);
     int y = m0*x+c0;
     return Point(x, y);
 }
 
 vector<Rect> filterRects(vector<Rect> detectedRects, vector<Circle> circles, vector<Line> lines)  {
+    printf("Circle size: %lu  Lines Size: %lu  Det Rect Size: %lu\n", circles.size(), lines.size(), detectedRects.size());
     vector<Rect> filteredRects1;
     for (int i = 0; i < detectedRects.size(); i++)  {
         for (int c=0; c < circles.size(); c++)  {
-            if (abs(detectedRects.at(i).x + detectedRects.at(i).width - circles.at(c).x) < 20 &&
-                abs(detectedRects.at(i).y + detectedRects.at(i).height - circles.at(c).y) < 20)  {
+            if (abs(detectedRects.at(i).x + detectedRects.at(i).width/2 - circles.at(c).x) < 20 &&
+                abs(detectedRects.at(i).y + detectedRects.at(i).height/2     - circles.at(c).y) < 20)  {
                     filteredRects1.push_back(detectedRects.at(i));
+                    i++;
+                    c=-1;
             }
         }
     }
-    //PARALLEL??
-    vector<Rect> filteredRects2;
+    printf("Circle size: %lu  Lines Size: %lu  Det Rect Size: %lu\n", circles.size(), lines.size(), filteredRects1.size());
+
+    int intersectionCounts[filteredRects1.size()];
+    for (int i = 0; i < filteredRects1.size(); i++)  intersectionCounts[i] = 0;
+
     for (int i = 0; i < filteredRects1.size(); i++)  {
         for (int l=0; l < lines.size(); l++)  {
             for (int l1=1; l1 < lines.size(); l1++)  {
-                if(l != l1 && filteredRects1.at(i).contains(
-                    intersection(lines.at(l).m,lines.at(l1).m, lines.at(l).c, lines.at(l1).c) ))  {
-                        filteredRects2.push_back(filteredRects1.at(i));
-                    }
+                 if (filteredRects1.at(i).contains(
+                     intersection(lines.at(l).m,lines.at(l1).m, lines.at(l).c, lines.at(l1).c)))
+                    intersectionCounts[i]++;
             }
         }
     }
-    return filteredRects2;
+    vector<Rect> filteredRects2;
+
+    for (int r = 0; r < filteredRects1.size(); r++)  {
+        if(intersectionCounts[r] > 2)  {
+            filteredRects2.push_back(filteredRects1.at(r));
+        }
+    }
+    printf("Circle size: %lu  Lines Size: %lu  Det Rect Size: %lu\n", circles.size(), lines.size(), filteredRects2.size());
+
+    return filteredRects2   ;
 }
 
-int main() {
+int main(int n, char **args) {
     if (!cascade.load(cascade_name)) printf("--(!)Error loading\n");
     vector<vector<string> > data = readCSV("data.csv");
     vector<vector<Rect> > truth_rects = find_truth_rects(data);
     vector<vector<Rect> > detected_rects = find_detected_rects(data);
     vector<vector<double> > f1scores = calc_f1scores(truth_rects, detected_rects);
-    vector<Circle> circles = getCircles();
-    vector<Line> lines = getLines();
+    Mat grad_dir, grad_mag;
+    string imgName = args[1];
+
+    getGradients(imgName, grad_mag, grad_dir);
+    
+    vector<Line> lines = houghTransformLines(imgName, grad_mag, grad_dir, 230.0);
+
+    vector<Circle> circles = HoughTransformCircles(imgName, grad_mag, grad_dir, 230.0);
+    vector<Rect> filtered_rects = filterRects(detected_rects.at(1), circles, lines);
+    Mat image = imread(imgName, CV_LOAD_IMAGE_COLOR);
+    for (int i = 0; i < filtered_rects.size(); i++)  {
+        rectangle(image, filtered_rects.at(i), Scalar(255, 255, 0), 2, 8, 0);
+    }
+    imwrite("filteredRects.jpg", image);
+    image = imread(imgName, CV_LOAD_IMAGE_COLOR);
+    for (int i = 0; i < detected_rects.at(1).size(); i++)  {
+        rectangle(image, detected_rects.at(1).at(i), Scalar(255, 255, 0), 2, 8, 0);
+    }
+    imwrite("detectedRects.jpg", image);
+
+
     // vector<Circle> circles;
     // vector<Line> lines;
     //cout << lines->size() <<"\n";
-    write_truth_images(data);
-    write_detected_images(data);
-    write_both_images(data);
-    print_f1scores(f1scores);
+    // write_truth_images(data);
+    // write_detected_images(data);
+    // write_both_images(data);
+    // print_f1scores(f1scores);
 }
