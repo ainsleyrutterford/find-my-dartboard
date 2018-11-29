@@ -69,7 +69,7 @@ void normalize(Mat &M, Mat &out)  {
 				}
 		}
 		double range = max-min;
-		printf("Range %f %f %f\n", min, max, range);
+		// printf("Range %f %f %f\n", min, max, range);
 
 
 		for (int i = 0; i < M.rows; i++ )  {
@@ -171,24 +171,18 @@ vector<Line> houghTransformLines(string imgName, Mat &gradient_mag, Mat &gradien
     Mat image = imread(imgName, IMREAD_GRAYSCALE);
 
     Mat gradient_thresh, double_mag, double_dir;
-    // imageToDouble(gradient_mag, double_mag);
-    // imageToDouble(gradient_dir, double_dir);
-    // Mat new_gradient = gradient_mag.mul(gradient_dir);
     Mat new_gradient = gradient_mag;
-    Mat uNG;
-    normalize(new_gradient, uNG);
-    imwrite("outputNG.jpg", uNG);
     Mat normalized;
     normalize(new_gradient, normalized);
     int min = round(sqrt(sqr(image.cols) + sqr(image.rows)));
-    Mat hough_space(Size(360,  min), CV_64F, Scalar(0));
+    Mat hough_space(Size(360, 2*min), CV_64F, Scalar(0));
     for (int y = 0; y < new_gradient.rows; y++) {
         for (int x = 0; x < new_gradient.cols; x++) {
             if (normalized.at<uchar>(y, x) > 128) {
                 for (double t = 0; t < hough_space.cols; t++) {
                     // if (gradient_dir.at<double>(y, x) * 180 / M_PI + 90 - 1 <= t &&
                     //     (gradient_dir.at<double>(y, x) * 180 / M_PI) +90 + 1 >= t) {
-                        
+
                     // }
                     int p = (int)(x * cos(t * M_PI / 180) + y * sin(t * M_PI / 180)) + min;
                     hough_space.at<double>(p, t) = hough_space.at<double>(p, t) + 1;
@@ -204,7 +198,6 @@ vector<Line> houghTransformLines(string imgName, Mat &gradient_mag, Mat &gradien
     Mat colour_image;
     cvtColor( image, colour_image, CV_GRAY2BGR );
     vector<Line> lines;
-    lines.reserve(100);
     int count = 0;
     for (int p = 0; p < hough_out.rows; p++) {
         for (int t = 0; t < hough_out.cols; t++) {
@@ -214,8 +207,7 @@ vector<Line> houghTransformLines(string imgName, Mat &gradient_mag, Mat &gradien
                 Point p1(200, round(m * 200 + c));
                 Point p2(300, round(m * 300 + c));
                 Line line = Line(m, c);
-                if(lines.size() < lines.capacity()) lines.push_back(line);
-                else cout << "lines full\n";
+                lines.push_back(line);
 
                 // line(image, p1, p2, Scalar(0, 255, 0), 2, 8, 0);
                 fullLine(colour_image, p1, p2, Scalar(255, 255, 0), m);
@@ -268,14 +260,14 @@ vector<Circle> HoughTransformCircles(string imgName, Mat &gradient_mag, Mat &gra
                 int x0 = x - (int)(r*cos(gradient_dir.at<double>(y, x)));
                 int y0 = y - (int)(r*sin(gradient_dir.at<double>(y, x)));
                 if(x0 >= 0 && x0 < image.cols && y0 >= 0 && y0 < image.rows )  {
-                    houghSpace[y0][x0][r]++; 
+                    houghSpace[y0][x0][r]++;
                 }
                 x0 = x + (int)(r*cos(gradient_dir.at<double>(y, x)));
                 y0 = y + (int)(r*sin(gradient_dir.at<double>(y, x)));
                 if(x0 >= 0 && x0 < image.cols && y0 >= 0 && y0 < image.rows )  {
-                    houghSpace[y0][x0][r]++; 
+                    houghSpace[y0][x0][r]++;
                 }
-            
+
             }
         }
     }
@@ -287,7 +279,7 @@ vector<Circle> HoughTransformCircles(string imgName, Mat &gradient_mag, Mat &gra
     for (int y = 0; y < image.rows; y++)    {
         for (int x = 0; x < image.cols; x++)  {
             for (int r = 0; r < rLen; r++)  {
-                
+
                 if (houghSpace[y][x][r] > 45)  {
                     Circle temp  = Circle(x, y, r);
                     if(circles.size() < circles.capacity() ) circles.push_back(temp);
@@ -301,12 +293,12 @@ vector<Circle> HoughTransformCircles(string imgName, Mat &gradient_mag, Mat &gra
     imwrite("circles.jpg", image);
     printf("Done circles\n");
 
-    return circles;    
+    return circles;
 }
 
 
 void getGradients(string imgName, Mat &grad_mag, Mat &grad_dir)  {
     Mat image = imread(imgName, IMREAD_GRAYSCALE);
     sobel(image, grad_mag, grad_dir);
+    cout << "sobel finished\n";
 }
-

@@ -104,6 +104,18 @@ void write_detected_images(vector<vector<string> > data) {
     }
 }
 
+void write_images(vector<vector<string> > data, vector<vector<Rect> > rect_vector) {
+    for (int i = 0; i < rect_vector.size(); i++) {
+        string filename = "darts/" + data.at(i).at(0);
+        Mat frame = imread(filename, CV_LOAD_IMAGE_COLOR);
+        for (int j = 0; j < rect_vector.at(i).size(); j++) {
+            Rect rect = rect_vector.at(i).at(j);
+            rectangle(frame, Point(rect.x, rect.y), Point(rect.x + rect.width, rect.y + rect.height), Scalar(0, 255, 0), 2);
+        }
+        imwrite("subtask3/filtered" + data.at(i).at(0), frame);
+    }
+}
+
 void write_both_images(vector<vector<string> > data) {
     vector<vector<Rect> > truth_rects = find_truth_rects(data);
     vector<vector<Rect> > detected_rects = find_detected_rects(data);
@@ -226,26 +238,19 @@ int main(int n, char **args) {
     vector<vector<Rect> > detected_rects = find_detected_rects(data);
     vector<vector<double> > f1scores = calc_f1scores(truth_rects, detected_rects);
     Mat grad_dir, grad_mag;
-    string imgName = args[1];
 
-    getGradients(imgName, grad_mag, grad_dir);
-    
-    vector<Line> lines = houghTransformLines(imgName, grad_mag, grad_dir, 230.0);
-
-    vector<Circle> circles = HoughTransformCircles(imgName, grad_mag, grad_dir, 230.0);
-    vector<Rect> filtered_rects = filterRects(detected_rects.at(1), circles, lines);
-    Mat image = imread(imgName, CV_LOAD_IMAGE_COLOR);
-    for (int i = 0; i < filtered_rects.size(); i++)  {
-        rectangle(image, filtered_rects.at(i), Scalar(255, 255, 0), 2, 8, 0);
+    vector<vector<Rect> > rects;
+    for (int i = 0; i < data.size(); i++) {
+        string image_name = "darts/" + data.at(i).at(0);
+        getGradients(image_name, grad_mag, grad_dir);
+        vector<Line> lines = houghTransformLines(image_name, grad_mag, grad_dir, 230.0);
+        vector<Circle> circles = HoughTransformCircles(image_name, grad_mag, grad_dir, 230.0);
+        vector<Rect> filtered_rects = filterRects(detected_rects.at(i), circles, lines);
+        rects.push_back(filtered_rects);
+        cout << "image " << i << " done.\n";
     }
-    imwrite("filteredRects.jpg", image);
-    image = imread(imgName, CV_LOAD_IMAGE_COLOR);
-    for (int i = 0; i < detected_rects.at(1).size(); i++)  {
-        rectangle(image, detected_rects.at(1).at(i), Scalar(255, 255, 0), 2, 8, 0);
-    }
-    imwrite("detectedRects.jpg", image);
 
-
+    write_images(data, rects);
     // vector<Circle> circles;
     // vector<Line> lines;
     //cout << lines->size() <<"\n";
