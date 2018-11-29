@@ -273,17 +273,14 @@ vector<Circle> HoughTransformCircles(string imgName, Mat &gradient_mag, Mat &gra
     }
     printf("In circles\n");
     vector<Circle> circles;
-    circles.reserve(100);
 
     cout<<circles.capacity()<<std::endl;
     for (int y = 0; y < image.rows; y++)    {
         for (int x = 0; x < image.cols; x++)  {
             for (int r = 0; r < rLen; r++)  {
-
-                if (houghSpace[y][x][r] > 45)  {
+                if (houghSpace[y][x][r] > 35)  {
                     Circle temp  = Circle(x, y, r);
-                    if(circles.size() < circles.capacity() ) circles.push_back(temp);
-                    else cout << "circles full\n";
+                    circles.push_back(temp);
                     circle(image, Point(x, y), r, Scalar(255, 255, 255), 2, 0);
                 }
             }
