@@ -116,6 +116,25 @@ void write_images(vector<vector<string> > data, vector<vector<Rect> > rect_vecto
     }
 }
 
+void write_hough_info(string image, vector<Circle> circles, vector<Line> lines, vector<Rect> rects) {
+    Mat frame = imread("darts/" + image, CV_LOAD_IMAGE_COLOR);
+    for (int i = 0; i < circles.size(); i++) {
+        Circle c = circles.at(i);
+        circle(frame, c.getCenter(), c.radius, Scalar(0, 255, 255), 2);
+    }
+    for (int i = 0; i < lines.size(); i++) {
+        double m = lines.at(i).m;
+        double c = lines.at(i).c;
+        Point p1(200, round(m * 200 + c));
+        Point p2(300, round(m * 300 + c));
+        fullLine(frame, p1, p2, Scalar(255, 255, 0), m);
+    }
+    for (int i = 0; i < rects.size(); i++) {
+        rectangle(frame, rects.at(i), Scalar(0, 255, 0), 2);
+    }
+    imwrite("subtask3/everything" + image, frame);
+}
+
 void write_both_images(vector<vector<string> > data) {
     vector<vector<Rect> > truth_rects = find_truth_rects(data);
     vector<vector<Rect> > detected_rects = find_detected_rects(data);
@@ -246,6 +265,7 @@ int main(int n, char **args) {
         vector<Line> lines = houghTransformLines(image_name, grad_mag, grad_dir, 230.0);
         vector<Circle> circles = HoughTransformCircles(image_name, grad_mag, grad_dir, 230.0);
         vector<Rect> filtered_rects = filterRects(detected_rects.at(i), circles, lines);
+        write_hough_info(data.at(i).at(0), circles, lines, filtered_rects);
         rects.push_back(filtered_rects);
         cout << "image " << i << " done.\n";
     }

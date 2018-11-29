@@ -1,20 +1,22 @@
 #include <iostream>
-using namespace std; 
+#include <opencv/cv.hpp>
 
-class Circle
-{
-      private:
-      
-      public:
-            int x, y, radius;      
+using namespace std;
+using namespace cv;
 
+class Circle {
+    private:
+    public:
+    int x, y, radius;
 
-             
-             Circle(int x, int y, int r)  {
-             	this->x = x;
-             	this->y = y;
-             	this->radius = r;
-             }
-        
-             
+    Circle(int x, int y, int r) {
+        this->x = x;
+        this->y = y;
+        this->radius = r;
+    }
+
+    Point getCenter() {
+        return Point(x,y);
+    }
+
 };

@@ -1,19 +1,13 @@
 #include <iostream>
-using namespace std; 
+using namespace std;
 
-class Line
-{
-      private:
-      
-      public:
-            int m, c;      
+class Line {
+    private:
+    public:
+    double m, c;
 
-
-             
-             Line(int m, int c)  {
-             	this->m = m;
-             	this->c = c;
-             }
-        
-             
+    Line(double m, double c) {
+        this->m = m;
+        this->c = c;
+    }
 };
