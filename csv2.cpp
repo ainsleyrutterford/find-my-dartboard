@@ -250,6 +250,47 @@ vector<Rect> filterRects(vector<Rect> detectedRects, vector<Circle> circles, vec
     return filteredRects2   ;
 }
 
+vector<Rect> update_detections(vector<Rect> detected_rects, vector<Circle> circles, vector<Line> lines) {
+    vector<Rect> final_detections;
+    vector<int> circle_votes, line_votes;
+
+    for (int i = 0; i < detected_rects.size(); i++) {
+        int vote = 0;
+        for (int c = 0; c < circles.size(); c++) {
+            if (abs(detected_rects.at(i).x + detected_rects.at(i).width/2 - circles.at(c).x) < 30 &&
+                abs(detected_rects.at(i).y + detected_rects.at(i).height/2 - circles.at(c).y) < 30)  {
+                    vote++;
+            }
+        }
+        circle_votes.push_back(vote);
+    }
+
+    for (int i = 0; i < detected_rects.size(); i++) {
+        int vote = 0;
+        for (int l1 = 0; l1 < lines.size(); l1++) {
+            for (int l2 = 0; l2 < lines.size(); l2++) {
+                if (l1 != l2) {
+                    Point rect_center = Point(detected_rects.at(i).x + detected_rects.at(i).width/2,
+                                              detected_rects.at(i).y + detected_rects.at(i).height/2);
+                    Point intersect = intersection(lines.at(l1).m,lines.at(l2).m, lines.at(l1).c, lines.at(l2).c);
+                    if (abs(rect_center.x - intersect.x) < 10 && abs(rect_center.y - intersect.y) < 10) {
+                        vote++;
+                    }
+                }
+            }
+        }
+        line_votes.push_back(vote);
+    }
+
+    for (int i = 0; i < detected_rects.size(); i++) {
+        if (circle_votes.at(i) + line_votes.at(i) > 5) {
+            final_detections.push_back(detected_rects.at(i));
+        }
+    }
+
+    return final_detections;
+}
+
 int main(int n, char **args) {
     if (!cascade.load(cascade_name)) printf("--(!)Error loading\n");
     vector<vector<string> > data = readCSV("data.csv");
@@ -264,7 +305,7 @@ int main(int n, char **args) {
         getGradients(image_name, grad_mag, grad_dir);
         vector<Line> lines = houghTransformLines(image_name, grad_mag, grad_dir, 230.0);
         vector<Circle> circles = HoughTransformCircles(image_name, grad_mag, grad_dir, 230.0);
-        vector<Rect> filtered_rects = filterRects(detected_rects.at(i), circles, lines);
+        vector<Rect> filtered_rects = update_detections(detected_rects.at(i), circles, lines);
         write_hough_info(data.at(i).at(0), circles, lines, filtered_rects);
         rects.push_back(filtered_rects);
         cout << "image " << i << " done.\n";
