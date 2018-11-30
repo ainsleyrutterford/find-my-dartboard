@@ -120,7 +120,7 @@ void write_hough_info(string image, vector<Circle> circles, vector<Line> lines, 
     Mat frame = imread("darts/" + image, CV_LOAD_IMAGE_COLOR);
     for (int i = 0; i < circles.size(); i++) {
         Circle c = circles.at(i);
-        circle(frame, c.getCenter(), c.radius, Scalar(0, 255, 255), 2);
+        circle(frame, c.getCenter(), c.radius, Scalar(255, 0, 255), 2);
     }
     for (int i = 0; i < lines.size(); i++) {
         double m = lines.at(i).m;
@@ -158,6 +158,13 @@ double percentage_overlap(Rect truth, Rect detected) {
     double biggest_area = max(truth.area(), detected.area());
     double intersect_area = intersect.area();
     double overlap = intersect_area/biggest_area;
+    return overlap;
+}
+
+double inner_rect_overlap(Rect outer, Rect inner) {
+    Rect intersect = outer & inner;
+
+    double overlap = ((double)intersect.area())/(double)(outer.area());
     return overlap;
 }
 
@@ -250,43 +257,120 @@ vector<Rect> filterRects(vector<Rect> detectedRects, vector<Circle> circles, vec
     return filteredRects2   ;
 }
 
-vector<Rect> update_detections(vector<Rect> detected_rects, vector<Circle> circles, vector<Line> lines) {
-    vector<Rect> final_detections;
-    vector<int> circle_votes, line_votes;
+double cross_product( Point a, Point b ){
+   return a.x*b.y - a.y*b.x;
+}
 
+double distance_to_line( Point begin, Point end, Point x ){
+   //translate the begin to the origin
+   end -= begin;
+   x -= begin;
+
+   //¿do you see the triangle?
+   double area = cross_product(x, end);
+   return abs(area / norm(end));
+}
+
+vector<Rect> update_detections(vector<Rect> detected_rects, vector<Circle> circles, vector<Line> lines) {
+    vector<Rect> noDuplicateRects;
+    for (int i = 0; i < detected_rects.size(); i++) {
+        bool noIdenticals = true;
+        Rect r1 = detected_rects.at(i);
+        for (int j = 0; j < noDuplicateRects.size() && !noIdenticals; j++) {
+            Rect r2 = noDuplicateRects.at(j);
+            if(r1 == r2) noIdenticals = false;
+        }
+        noDuplicateRects.push_back(r1);
+    }
+    detected_rects = noDuplicateRects;
+
+
+
+    vector<int> circle_votes, line_votes, line_votes2;
+    
+    for (int c0 = 0; c0 < circles.size(); c0++) {
+        for (int c1 = 0; c1 < circles.size(); c1++) {
+            if (circles.at(c0).isOuterCircleOf(circles.at(c1)))  {
+                detected_rects.push_back(circles.at(c0).makeRect());
+            }
+        }
+    }
+
+    
+
+    vector<Rect> final_detections;
+    //Voting for rectangles that have an outer or inner circle
     for (int i = 0; i < detected_rects.size(); i++) {
         int vote = 0;
         for (int c = 0; c < circles.size(); c++) {
-            if (abs(detected_rects.at(i).x + detected_rects.at(i).width/2 - circles.at(c).x) < 30 &&
-                abs(detected_rects.at(i).y + detected_rects.at(i).height/2 - circles.at(c).y) < 30)  {
+            if (circles.at(c).isSimilarTo(detected_rects.at(i)))  {
                     vote++;
             }
         }
         circle_votes.push_back(vote);
     }
-
+    //Count lines passing through/near rect center
     for (int i = 0; i < detected_rects.size(); i++) {
         int vote = 0;
-        for (int l1 = 0; l1 < lines.size(); l1++) {
-            for (int l2 = 0; l2 < lines.size(); l2++) {
-                if (l1 != l2) {
-                    Point rect_center = Point(detected_rects.at(i).x + detected_rects.at(i).width/2,
-                                              detected_rects.at(i).y + detected_rects.at(i).height/2);
-                    Point intersect = intersection(lines.at(l1).m,lines.at(l2).m, lines.at(l1).c, lines.at(l2).c);
-                    if (abs(rect_center.x - intersect.x) < 10 && abs(rect_center.y - intersect.y) < 10) {
-                        vote++;
-                    }
-                }
-            }
+        vector<Line> linesNearCenter;
+        Rect r = detected_rects.at(i);
+        for (int l = 0; l < lines.size(); l++) {
+            if(distance_to_line(Point(r.x, lines.at(l).getY(r.x)), 
+                                Point(r.x+r.width, lines.at(l).getY(r.x+r.width)),
+                                Point(r.x+r.width/2, r.y+r.height/2)) < 10)
+                linesNearCenter.push_back(lines.at(l));
         }
-        line_votes.push_back(vote);
+        int gradients[11];
+        for (int g = 0; g < 11; g++) gradients[g] = 0;
+        // printf("Lines near center %lu\n", linesNearCenter.size());
+        for (int l = 0; l < linesNearCenter.size(); l++)  {
+            gradients[(int)(atan(linesNearCenter.at(l).m)*10.0/M_PI+5.0)] = 1;
+        }
+        int sum = 0;
+        for (int g = 0; g < 11; g++)  sum += gradients[g];
+        printf("Diff line gradients %d\n", sum);
+        line_votes2.push_back(sum);
     }
 
+
+
+    // //Voting for rectangles that have an intersection near the center
+    // for (int i = 0; i < detected_rects.size(); i++) {
+    //     int vote = 0;
+    //     for (int l1 = 0; l1 < lines.size(); l1++) {
+    //         for (int l2 = 0; l2 < lines.size(); l2++) {
+    //             if (l1 != l2) {
+    //                 int allowedError = 0.4*detected_rects.at(i).width/2;
+    //                 Point rect_center = Point(detected_rects.at(i).x + detected_rects.at(i).width/2,
+    //                                           detected_rects.at(i).y + detected_rects.at(i).height/2);
+    //                 Point intersect = intersection(lines.at(l1).m,lines.at(l2).m, lines.at(l1).c, lines.at(l2).c);
+    //                 if (abs(rect_center.x - intersect.x) < allowedError && abs(rect_center.y - intersect.y) < allowedError/2) {
+    //                     vote++;
+    //                 }
+    //             }
+    //         }
+    //     }
+    //     line_votes.push_back(vote);
+    // }
+
+    //Vote counting
     for (int i = 0; i < detected_rects.size(); i++) {
-        if (circle_votes.at(i) + line_votes.at(i) > 5) {
+        printf("Rectangle votes\n Circle %d\n Lines2 %d\n", circle_votes.at(i), line_votes2.at(i));
+        if (circle_votes.at(i) +line_votes2.at(i)/2 > 1) {
             final_detections.push_back(detected_rects.at(i));
         }
     }
+
+
+    // for(int r1 = 0; r1 < final_detections.size(); r1++)  {
+    //     for(int r2 = 0; r2 < final_detections.size(); r2++)  {
+    //         if (final_detections.at(r1).area() > final_detections.at(r2).area()) {
+    //             double overlap = inner_rect_overlap(final_detections.at(r1), final_detections.at(r2));
+    //             printf("%f\n", overlap);
+    //             if(overlap > 0)  final_detections.erase(final_detections.begin() + r2);
+    //         }
+    //     }
+    // }
 
     return final_detections;
 }
@@ -306,7 +390,9 @@ int main(int n, char **args) {
         vector<Line> lines = houghTransformLines(image_name, grad_mag, grad_dir, 230.0);
         vector<Circle> circles = HoughTransformCircles(image_name, grad_mag, grad_dir, 230.0);
         vector<Rect> filtered_rects = update_detections(detected_rects.at(i), circles, lines);
+
         write_hough_info(data.at(i).at(0), circles, lines, filtered_rects);
+
         rects.push_back(filtered_rects);
         cout << "image " << i << " done.\n";
     }

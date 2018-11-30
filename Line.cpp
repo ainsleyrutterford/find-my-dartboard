@@ -10,4 +10,8 @@ class Line {
         this->m = m;
         this->c = c;
     }
+
+    int getY(int x)  {
+        return m*x+c;
+    }
 };

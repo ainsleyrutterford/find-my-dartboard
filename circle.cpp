@@ -6,6 +6,7 @@ using namespace cv;
 
 class Circle {
     private:
+        const double percentage = 0.4;
     public:
     int x, y, radius;
 
@@ -20,11 +21,33 @@ class Circle {
     }
 
     bool isSimilarTo(Circle otherCircle)  {
-        if (abs( otherCircle.x - x) < 5 &&
-            abs( otherCircle.y - y) < 5 &&
-            abs( otherCircle.radius - radius) < 5)
-            return true;
-        return false;
+        int allowedError = percentage*radius;
+        if (abs( otherCircle.x - x) > allowedError) return false;
+        if (abs( otherCircle.y - y) > allowedError) return false;
+        if (abs( otherCircle.radius - radius) > allowedError) return false;
+        return true;
+    }
+
+    bool isSimilarTo(Rect r)  {
+        int allowedError = percentage*radius;
+
+        if(abs(r.x+r.width/2 - x) > allowedError)  return false;
+        if(abs(r.y+r.height/2 - y) > allowedError)  return false;
+        if(abs(r.width/2 - radius) > allowedError || abs(0.63*(r.width/2) - radius) > allowedError)  return false;
+        if(abs(r.height/2 - radius) > allowedError || abs(0.63*(r.height/2) - radius) > allowedError)  return false;
+        return true;
+    }
+
+    bool isOuterCircleOf(Circle c)  {
+        int allowedError = percentage*radius;
+        if(abs(c.x- x) > allowedError)  return false;
+        if(abs(c.y - y) > allowedError)  return false;
+        if(abs(0.63*radius - c.radius) > allowedError)  return false;
+        return true;
+    }
+
+    Rect makeRect()  {
+         return Rect(x-radius, y-radius, 2*radius, 2*radius);
     }
 
 };
