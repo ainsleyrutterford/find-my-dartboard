@@ -161,10 +161,11 @@ double percentage_overlap(Rect truth, Rect detected) {
     return overlap;
 }
 
-double inner_rect_overlap(Rect outer, Rect inner) {
-    Rect intersect = outer & inner;
-
-    double overlap = ((double)intersect.area())/(double)(outer.area());
+double one_way_overlap(Rect bigger, Rect smaller) {
+    Rect intersect = bigger & smaller;
+    double intersect_area = intersect.area();
+    double smaller_area = smaller.area();
+    double overlap = intersect_area/smaller_area;
     return overlap;
 }
 
@@ -271,40 +272,58 @@ double distance_to_line( Point begin, Point end, Point x ){
    return abs(area / norm(end));
 }
 
-vector<Rect> update_detections(vector<Rect> detected_rects, vector<Circle> circles, vector<Line> lines) {
-    vector<Rect> noDuplicateRects;
-    for (int i = 0; i < detected_rects.size(); i++) {
-        bool noIdenticals = true;
-        Rect r1 = detected_rects.at(i);
-        for (int j = 0; j < noDuplicateRects.size() && !noIdenticals; j++) {
-            Rect r2 = noDuplicateRects.at(j);
-            if(r1 == r2) noIdenticals = false;
+vector<Rect> remove_duplicate_rects(vector<Rect> rects) {
+    cout << "input amount of rects: " << rects.size() << "\n";
+    vector<Rect> no_duplicates;
+    for (int i = 0; i < rects.size(); i++) {
+        bool no_identicals = true;
+        Rect r1 = rects.at(i);
+        for (int j = 0; j < no_duplicates.size() && !no_identicals; j++) {
+            Rect r2 = no_duplicates.at(j);
+            if (r1 == r2) no_identicals = false;
         }
-        noDuplicateRects.push_back(r1);
+        no_duplicates.push_back(r1);
     }
-    detected_rects = noDuplicateRects;
+    cout << "output amount of rects: " << no_duplicates.size() << "\n";
+    return no_duplicates;
+}
 
+vector<Rect> update_detections(vector<Rect> detected_rects, vector<Circle> circles, vector<Line> lines) {
 
+    detected_rects = remove_duplicate_rects(detected_rects);
 
     vector<int> circle_votes, line_votes, line_votes2;
-    
+    int inner_circle_of[circles.size()];
+    for (int c = 0; c < circles.size(); c++) inner_circle_of[c] = -1;
+
     for (int c0 = 0; c0 < circles.size(); c0++) {
         for (int c1 = 0; c1 < circles.size(); c1++) {
-            if (circles.at(c0).isOuterCircleOf(circles.at(c1)))  {
-                detected_rects.push_back(circles.at(c0).makeRect());
+            if (c0 != c1 && circles.at(c0).isInnerCircleOf(circles.at(c1))) {
+                inner_circle_of[c1] = c0;
             }
         }
     }
 
-    
+    for (int c = 0; c < circles.size(); c++) cout << "inner circle of " << c << " is " << inner_circle_of[c] << "\n";
 
-    vector<Rect> final_detections;
+    for (int c0 = 0; c0 < circles.size(); c0++) {
+        for (int c1 = 0; c1 < circles.size(); c1++) {
+            if (c0 != c1 && inner_circle_of[c1] == c0 && inner_circle_of[c0] == -1) {
+                cout << "adding outer circle: " << c1 << "\n";
+                detected_rects.push_back(circles.at(c1).makeRect());
+            }
+        }
+    }
+
     //Voting for rectangles that have an outer or inner circle
     for (int i = 0; i < detected_rects.size(); i++) {
         int vote = 0;
         for (int c = 0; c < circles.size(); c++) {
-            if (circles.at(c).isSimilarTo(detected_rects.at(i)))  {
+            if (circles.at(c).isSimilarTo(detected_rects.at(i))) {
                     vote++;
+                    if (inner_circle_of[c] != -1 && inner_circle_of[inner_circle_of[c]] == -1) {
+                        vote++;
+                    }
             }
         }
         circle_votes.push_back(vote);
@@ -315,7 +334,7 @@ vector<Rect> update_detections(vector<Rect> detected_rects, vector<Circle> circl
         vector<Line> linesNearCenter;
         Rect r = detected_rects.at(i);
         for (int l = 0; l < lines.size(); l++) {
-            if(distance_to_line(Point(r.x, lines.at(l).getY(r.x)), 
+            if(distance_to_line(Point(r.x, lines.at(l).getY(r.x)),
                                 Point(r.x+r.width, lines.at(l).getY(r.x+r.width)),
                                 Point(r.x+r.width/2, r.y+r.height/2)) < 10)
                 linesNearCenter.push_back(lines.at(l));
@@ -353,6 +372,8 @@ vector<Rect> update_detections(vector<Rect> detected_rects, vector<Circle> circl
     //     line_votes.push_back(vote);
     // }
 
+    vector<Rect> final_detections;
+
     //Vote counting
     for (int i = 0; i < detected_rects.size(); i++) {
         printf("Rectangle votes\n Circle %d\n Lines2 %d\n", circle_votes.at(i), line_votes2.at(i));
@@ -362,15 +383,15 @@ vector<Rect> update_detections(vector<Rect> detected_rects, vector<Circle> circl
     }
 
 
-    // for(int r1 = 0; r1 < final_detections.size(); r1++)  {
-    //     for(int r2 = 0; r2 < final_detections.size(); r2++)  {
-    //         if (final_detections.at(r1).area() > final_detections.at(r2).area()) {
-    //             double overlap = inner_rect_overlap(final_detections.at(r1), final_detections.at(r2));
-    //             printf("%f\n", overlap);
-    //             if(overlap > 0)  final_detections.erase(final_detections.begin() + r2);
-    //         }
-    //     }
-    // }
+    for(int r1 = 0; r1 < final_detections.size(); r1++)  {
+        for(int r2 = 0; r2 < final_detections.size(); r2++)  {
+            if (final_detections.at(r1).area() > final_detections.at(r2).area()) {
+                double overlap = one_way_overlap(final_detections.at(r1), final_detections.at(r2));
+                printf("%f\n", overlap);
+                if(overlap > 0.8)  final_detections.erase(final_detections.begin() + r2);
+            }
+        }
+    }
 
     return final_detections;
 }

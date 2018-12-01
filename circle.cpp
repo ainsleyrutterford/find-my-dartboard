@@ -40,9 +40,17 @@ class Circle {
 
     bool isOuterCircleOf(Circle c)  {
         int allowedError = percentage*radius;
-        if(abs(c.x- x) > allowedError)  return false;
+        if(abs(c.x - x) > allowedError)  return false;
         if(abs(c.y - y) > allowedError)  return false;
-        if(abs(0.63*radius - c.radius) > allowedError)  return false;
+        if(abs(0.63 * radius - c.radius) > allowedError)  return false;
+        return true;
+    }
+
+    bool isInnerCircleOf(Circle c)  {
+        int allowedError = percentage*radius;
+        if(abs(c.x - x) > allowedError)  return false;
+        if(abs(c.y - y) > allowedError)  return false;
+        if(abs(radius - 0.63 * c.radius) > (allowedError * 1.25))  return false;
         return true;
     }
 
