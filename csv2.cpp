@@ -189,7 +189,7 @@ vector<vector<double> > calc_f1scores(vector<vector<Rect> > truth_rects, vector<
                 double overlap = percentage_overlap(truth, detected);
                 if (overlap > max_overlap) max_overlap = overlap;
             }
-            if (max_overlap >= 0.6) true_positives++;
+            if (max_overlap >= 0.45) true_positives++;
         }
         int false_positives = detected_rects.at(i).size() - true_positives;
         int false_negatives = truth_rects.at(i).size() - true_positives;
@@ -210,6 +210,10 @@ void print_f1scores(vector<vector<double> > f1scores) {
         for (int j = 0; j < f1scores.at(i).size(); j++) cout << f1scores.at(i).at(j) << " ";
         cout << "\n";
     }
+    double sum = 0;
+    for (int i = 0; i < f1scores.size(); i++) sum += f1scores.at(i).at(3);
+    double ave = sum / f1scores.size();
+    cout << "Average f1 score: " << ave << "\n";
 }
 
 Point intersection(int m0, int m1, int c0, int c1)  {
@@ -401,10 +405,10 @@ int main(int n, char **args) {
     vector<vector<string> > data = readCSV("data.csv");
     vector<vector<Rect> > truth_rects = find_truth_rects(data);
     vector<vector<Rect> > detected_rects = find_detected_rects(data);
-    vector<vector<double> > f1scores = calc_f1scores(truth_rects, detected_rects);
+
     Mat grad_dir, grad_mag;
 
-    vector<vector<Rect> > rects;
+    vector<vector<Rect> > new_rects;
     for (int i = 0; i < data.size(); i++) {
         string image_name = "darts/" + data.at(i).at(0);
         getGradients(image_name, grad_mag, grad_dir);
@@ -414,16 +418,21 @@ int main(int n, char **args) {
 
         write_hough_info(data.at(i).at(0), circles, lines, filtered_rects);
 
-        rects.push_back(filtered_rects);
+        new_rects.push_back(filtered_rects);
         cout << "image " << i << " done.\n";
     }
 
-    write_images(data, rects);
+    vector<vector<double> > original_f1scores = calc_f1scores(truth_rects, detected_rects);
+    vector<vector<double> > filtered_f1scores = calc_f1scores(truth_rects, new_rects);
+
+    print_f1scores(original_f1scores);
+    print_f1scores(filtered_f1scores);
+
+    write_images(data, new_rects);
     // vector<Circle> circles;
     // vector<Line> lines;
     //cout << lines->size() <<"\n";
     // write_truth_images(data);
     // write_detected_images(data);
     // write_both_images(data);
-    // print_f1scores(f1scores);
 }
