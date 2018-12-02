@@ -111,21 +111,18 @@ void normalize(Mat &M, Mat &out)  {
 	  double max = -std::numeric_limits<double>::max();
 
 
-	  for (int i = 0; i < M.rows; i++ )  {
-			  for (int j = 0; j < M.cols; j++ )  {
-					  if ( M.at<double>(i, j) < min)  min = M.at<double>(i, j);
-						else if(M.at<double>(i, j) > max) max =  M.at<double>(i, j);
-				}
-		}
-		double range = max-min;
-		// printf("Range %f %f %f\n", min, max, range);
-
-
-		for (int i = 0; i < M.rows; i++ )  {
-			  for (int j = 0; j < M.cols; j++ )  {
-						out.at<uchar>(i, j) = (uchar)((M.at<double>(i, j) - min)*255/range);
-				}
-		}
+	for (int i = 0; i < M.rows; i++ )  {
+        for (int j = 0; j < M.cols; j++ )  {
+            if ( M.at<double>(i, j) < min)  min = M.at<double>(i, j);
+            else if(M.at<double>(i, j) > max) max =  M.at<double>(i, j);
+        }
+    }
+    double range = max-min;
+    for (int i = 0; i < M.rows; i++ )  {
+        for (int j = 0; j < M.cols; j++ )  {
+            out.at<uchar>(i, j) = (uchar)((M.at<double>(i, j) - min)*255/range);
+        }
+    }
 }
 void getGradients(Mat image, Mat &grad_mag, Mat &grad_dir)  {
     sobel(image, grad_mag, grad_dir);
@@ -170,57 +167,48 @@ void fullLine(cv::Mat &img, cv::Point a, cv::Point b, cv::Scalar color, double m
 vector<Line> houghTransformLines(Mat &image, Mat &gradient_mag, Mat &gradient_dir)  {
     Mat normalized;
     normalize(gradient_mag, normalized);
+    //Shift negative angle values, so will always be in positive array location
     int min = round(sqrt(sqr(image.cols) + sqr(image.rows)));
     Mat hough_space(Size(360, 2*min), CV_64F, Scalar(0));
     for (int y = 0; y < gradient_mag.rows; y++) {
         for (int x = 0; x < gradient_mag.cols; x++) {
+            //Increment hough space if gradient_mag above thresh AND t matches gradient_dir angle
             if (normalized.at<uchar>(y, x) > 128) {
                 for (double t = 0; t < hough_space.cols; t++) {
-                    double angle_rad1 = gradient_dir.at<double>(y, x)+2*M_PI;
-                    double angle_rad2 = gradient_dir.at<double>(y, x) + M_PI;
-                    if(angle_rad1 >= 2*M_PI) angle_rad1 -= 2*M_PI;
+                    double b2w_angle = gradient_dir.at<double>(y, x)+2*M_PI;
+                    double w2b_angle = gradient_dir.at<double>(y, x) + M_PI;
+                    if(b2w_angle >= 2*M_PI) b2w_angle -= 2*M_PI; 
 
-                    if (abs(angle_rad1*180/M_PI - t)  <= 0.5) {
+                    if (abs(b2w_angle*180/M_PI - t)  <= 0.5) {
                         int p = (int)(x * cos(t*M_PI/180) + y * sin(t*M_PI/180)) + min;
                         hough_space.at<double>(p, t) = hough_space.at<double>(p, t) + 1;
                     }
-                    if (abs(angle_rad2*180/M_PI - t)  <= 0.5) {
+                    if (abs(w2b_angle*180/M_PI - t)  <= 0.5) {
                         int p = (int)(x * cos(t*M_PI/180) + y * sin(t*M_PI/180)) + min;
                         hough_space.at<double>(p, t) = hough_space.at<double>(p, t) + 1;
                     }
-
-
                 }
             }
         }
     }
-    Mat hough_out;
+    Mat hough_out, colour_image;
     normalize(hough_space, hough_out);
-    imwrite("houghSpace.jpg", hough_out);
-    printf("In lines\n");
-
-    Mat colour_image;
+    // imwrite("houghSpace.jpg", hough_out);
+    // printf("In lines\n");
     cvtColor( image, colour_image, CV_GRAY2BGR );
     vector<Line> lines;
-    int count = 0;
     for (int p = 0; p < hough_out.rows; p++) {
         for (int t = 0; t < hough_out.cols; t++) {
             if (hough_out.at<uchar>(p, t) > 40) {
                 double m = - cos(t * M_PI / 180) / sin(t * M_PI / 180);
                 double c = (p - min) / sin(t * M_PI / 180);
-                Point p1(200, round(m * 200 + c));
+                Point p1(200, round(m * 200 + c));  //y = mx + c
                 Point p2(300, round(m * 300 + c));
                 Line line = Line(m, c);
                 lines.push_back(line);
-
-                //line(image, p1, p2, Scalar(0, 255, 0), 2, 8, 0);
-                fullLine(colour_image, p1, p2, Scalar(255, 255, 0), m, normalized, c);
             }
         }
     }
-    imwrite("lines.jpg", colour_image);
-    printf("Done lines\n");
-
     return lines;
 
 }
