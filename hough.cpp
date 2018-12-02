@@ -191,7 +191,7 @@ vector<Line> houghTransformLines(Mat &image, Mat &gradient_mag, Mat &gradient_di
             }
         }
     }
-    Mat hough_out;
+    Mat hough_out   ;
     normalize(hough_space, hough_out);
     // imwrite("houghSpace.jpg", hough_out);
     // printf("In lines\n");
@@ -240,12 +240,12 @@ void free3d(int ***arr, int y, int x, int r)  {
 }
 
 vector<Circle> HoughTransformCircles(Mat image, Mat &gradient_mag, Mat &gradient_dir)  {
-
+    //Maximum circle radius is rLen = image.width / 2
     int rLen = image.rows/2;
     int ***houghSpace = allocate3DArray(image.rows, image.cols, rLen);
-    for (int y = 0; y < image.rows; y++)    {
-        for (int x = 0; x < image.cols; x++)  {
-            for (int r = 0; r < rLen; r++)  {
+    for (int y = 0; y < image.rows; y++) {
+        for (int x = 0; x < image.cols; x++) {
+            for (int r = 0; r < rLen; r++)     {
                 int x0 = x - (int)(r*cos(gradient_dir.at<double>(y, x)));
                 int y0 = y - (int)(r*sin(gradient_dir.at<double>(y, x)));
                 if(x0 >= 0 && x0 < image.cols && y0 >= 0 && y0 < image.rows )  {
@@ -260,7 +260,7 @@ vector<Circle> HoughTransformCircles(Mat image, Mat &gradient_mag, Mat &gradient
             }
         }
     }
-    printf("In circles\n");
+    //
     vector<Circle> circles;
     for (int y = 0; y < image.rows; y++)    {
         for (int x = 0; x < image.cols; x++)  {
@@ -268,7 +268,6 @@ vector<Circle> HoughTransformCircles(Mat image, Mat &gradient_mag, Mat &gradient
                 if (houghSpace[y][x][r] > 30)  {
                     Circle temp  = Circle(x, y, r);
                     circles.push_back(temp);
-                    // circle(image, Point(x, y), r, Scalar(255, 255, 255), 2, 0);
                 }
             }
         }
@@ -279,7 +278,6 @@ vector<Circle> HoughTransformCircles(Mat image, Mat &gradient_mag, Mat &gradient
     if(circles.size() != 0)  filterCircles.push_back(circles.at(0));
     for (int c = 1; c < circles.size(); c++)  {
         bool similar = false;
-
         for (int fc = 0; fc < filterCircles.size() && similar == false; fc++)  {
             if( circles.at(c).isSimilarTo(filterCircles.at(fc)))  {
                 similar = true;
@@ -287,11 +285,7 @@ vector<Circle> HoughTransformCircles(Mat image, Mat &gradient_mag, Mat &gradient
         }
         if (!similar)   filterCircles.push_back(circles.at(c));
     }
-
     free3d(houghSpace, image.rows, image.cols, rLen);
-    // imwrite("circles.jpg", image);
-    // printf("Done circles\n");
-
     return filterCircles;
 }
 
