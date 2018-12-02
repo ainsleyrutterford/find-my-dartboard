@@ -191,11 +191,10 @@ vector<Line> houghTransformLines(Mat &image, Mat &gradient_mag, Mat &gradient_di
             }
         }
     }
-    Mat hough_out, colour_image;
+    Mat hough_out;
     normalize(hough_space, hough_out);
     // imwrite("houghSpace.jpg", hough_out);
     // printf("In lines\n");
-    cvtColor( image, colour_image, CV_GRAY2BGR );
     vector<Line> lines;
     for (int p = 0; p < hough_out.rows; p++) {
         for (int t = 0; t < hough_out.cols; t++) {
