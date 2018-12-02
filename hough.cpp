@@ -167,15 +167,13 @@ void fullLine(cv::Mat &img, cv::Point a, cv::Point b, cv::Scalar color, double m
     //  }
 }
 
-vector<Line> houghTransformLines(Mat &image, Mat &gradient_mag, Mat &gradient_dir, double thresh_val)  {
-    Mat gradient_thresh, double_mag, double_dir;
-    Mat new_gradient = gradient_mag;
+vector<Line> houghTransformLines(Mat &image, Mat &gradient_mag, Mat &gradient_dir)  {
     Mat normalized;
-    normalize(new_gradient, normalized);
+    normalize(gradient_mag, normalized);
     int min = round(sqrt(sqr(image.cols) + sqr(image.rows)));
     Mat hough_space(Size(360, 2*min), CV_64F, Scalar(0));
-    for (int y = 0; y < new_gradient.rows; y++) {
-        for (int x = 0; x < new_gradient.cols; x++) {
+    for (int y = 0; y < gradient_mag.rows; y++) {
+        for (int x = 0; x < gradient_mag.cols; x++) {
             if (normalized.at<uchar>(y, x) > 128) {
                 for (double t = 0; t < hough_space.cols; t++) {
                     double angle_rad1 = gradient_dir.at<double>(y, x)+2*M_PI;
@@ -254,7 +252,7 @@ void free3d(int ***arr, int y, int x, int r)  {
 
 }
 
-vector<Circle> HoughTransformCircles(Mat image, Mat &gradient_mag, Mat &gradient_dir, double thresh_val)  {
+vector<Circle> HoughTransformCircles(Mat image, Mat &gradient_mag, Mat &gradient_dir)  {
 
     int rLen = image.rows/2;
     int ***houghSpace = allocate3DArray(image.rows, image.cols, rLen);
