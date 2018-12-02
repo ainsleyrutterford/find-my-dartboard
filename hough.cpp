@@ -51,10 +51,7 @@ void convolution(cv::Mat &input, Mat &kernel, int size, cv::Mat &blurredOutput) 
     int kernelRadiusY = ( kernel.size[1] - 1 ) / 2;
 
     cv::Mat paddedInput;
-    cv::copyMakeBorder( input, paddedInput,
-                        kernelRadiusX, kernelRadiusX, kernelRadiusY, kernelRadiusY,
-                        cv::BORDER_REPLICATE );
-
+    cv::copyMakeBorder( input, paddedInput, kernelRadiusX, kernelRadiusX, kernelRadiusY, kernelRadiusY, cv::BORDER_REPLICATE );
     // now we can do the convoltion
     for ( int i = 0; i < input.rows; i++ ) {
         for( int j = 0; j < input.cols; j++ ) {
@@ -66,11 +63,9 @@ void convolution(cv::Mat &input, Mat &kernel, int size, cv::Mat &blurredOutput) 
                     double imagey = j + n + kernelRadiusY;
                     double kernelx = m + kernelRadiusX;
                     double kernely = n + kernelRadiusY;
-
                     // get the values from the padded image and the kernel
                     double imageval = ( double ) paddedInput.at<double>( imagex, imagey );
                     double kernalval = kernel.at<double>( kernelx, kernely );
-
                     // do the multiplication
                     sum += imageval * kernalval;
                 }
@@ -132,8 +127,7 @@ void normalize(Mat &M, Mat &out)  {
 				}
 		}
 }
-void getGradients(string imgName, Mat &grad_mag, Mat &grad_dir)  {
-    Mat image = imread(imgName, IMREAD_GRAYSCALE);
+void getGradients(Mat image, Mat &grad_mag, Mat &grad_dir)  {
     sobel(image, grad_mag, grad_dir);
     cout << "sobel finished\n";
 }
@@ -173,9 +167,7 @@ void fullLine(cv::Mat &img, cv::Point a, cv::Point b, cv::Scalar color, double m
     //  }
 }
 
-vector<Line> houghTransformLines(string imgName, Mat &gradient_mag, Mat &gradient_dir, double thresh_val)  {
-    Mat image = imread(imgName, IMREAD_GRAYSCALE);
-
+vector<Line> houghTransformLines(Mat &image, Mat &gradient_mag, Mat &gradient_dir, double thresh_val)  {
     Mat gradient_thresh, double_mag, double_dir;
     Mat new_gradient = gradient_mag;
     Mat normalized;
@@ -262,8 +254,7 @@ void free3d(int ***arr, int y, int x, int r)  {
 
 }
 
-vector<Circle> HoughTransformCircles(string imgName, Mat &gradient_mag, Mat &gradient_dir, double thresh_val)  {
-    Mat image = imread(imgName, IMREAD_GRAYSCALE);
+vector<Circle> HoughTransformCircles(Mat image, Mat &gradient_mag, Mat &gradient_dir, double thresh_val)  {
 
     int rLen = image.rows/2;
     int ***houghSpace = allocate3DArray(image.rows, image.cols, rLen);
