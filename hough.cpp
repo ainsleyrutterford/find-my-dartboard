@@ -282,7 +282,7 @@ vector<Circle> HoughTransformCircles(Mat image, Mat &gradient_mag, Mat &gradient
     //     if (!similar)   filterCircles.push_back(circles.at(c));
     // }
     free3d(houghSpace, image.rows, image.cols, rLen);
-    return filterCircles;
+    return circles;
 }
 
 
