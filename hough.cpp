@@ -128,10 +128,6 @@ void getGradients(Mat image, Mat &grad_mag, Mat &grad_dir)  {
     sobel(image, grad_mag, grad_dir);
     cout << "sobel finished\n";
 }
-
-
-
-
 void fullLine(cv::Mat &img, cv::Point a, cv::Point b, cv::Scalar color, double m, Mat &gradient_mag, double c) {
      Point p(0,0), q(img.cols,img.rows);
 
@@ -273,18 +269,18 @@ vector<Circle> HoughTransformCircles(Mat image, Mat &gradient_mag, Mat &gradient
         }
     }
 
-    //Filter similar circles
-    vector<Circle> filterCircles;
-    if(circles.size() != 0)  filterCircles.push_back(circles.at(0));
-    for (int c = 1; c < circles.size(); c++)  {
-        bool similar = false;
-        for (int fc = 0; fc < filterCircles.size() && similar == false; fc++)  {
-            if( circles.at(c).isSimilarTo(filterCircles.at(fc)))  {
-                similar = true;
-            }
-        }
-        if (!similar)   filterCircles.push_back(circles.at(c));
-    }
+    // //Filter similar circles
+    // vector<Circle> filterCircles;
+    // if(circles.size() != 0)  filterCircles.push_back(circles.at(0));
+    // for (int c = 1; c < circles.size(); c++)  {
+    //     bool similar = false;
+    //     for (int fc = 0; fc < filterCircles.size() && similar == false; fc++)  {
+    //         if( circles.at(c).isSimilarTo(filterCircles.at(fc)))  {
+    //             similar = true;
+    //         }
+    //     }
+    //     if (!similar)   filterCircles.push_back(circles.at(c));
+    // }
     free3d(houghSpace, image.rows, image.cols, rLen);
     return filterCircles;
 }
