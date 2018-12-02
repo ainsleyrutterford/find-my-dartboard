@@ -50,7 +50,7 @@ class Circle {
         int allowedError = percentage*radius;
         if(abs(c.x - x) > allowedError)  return false;
         if(abs(c.y - y) > allowedError)  return false;
-        if(abs(radius - 0.63 * c.radius) > (allowedError * 1.25))  return false;
+        if(abs(radius - 0.63 * c.radius) > (allowedError))  return false;
         return true;
     }
 

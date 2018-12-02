@@ -1,8 +1,5 @@
 #include <stdio.h>
 #include <opencv/cv.hpp>
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
 #include <math.h>
 #include <string>
 #include <iostream>
@@ -158,13 +155,36 @@ void sobel(Mat &image, Mat &gradient_mag, Mat &gradient_dir) {
     imwrite("outputDir.jpg", uGDir);
 }
 
-void fullLine(cv::Mat &img, cv::Point a, cv::Point b, cv::Scalar color, double m) {
+void fullLine(cv::Mat &img, cv::Point a, cv::Point b, cv::Scalar color, double m, Mat &gradient_mag, double c) {
      Point p(0,0), q(img.cols,img.rows);
 
      p.y = -(a.x - p.x) * m + a.y;
      q.y = -(b.x - q.x) * m + b.y;
 
-     line(img,p,q,color,1,8,0);
+    line(img,p,q,color,1,8,0);
+
+    Point p0(-1, -1);
+    Point p1(-1, -1);
+
+    //  for (int x = 0; x < img.cols; x+=3)  {
+    //     int y = m*x + c;
+    //     if(y < img.rows && y >=0)  {
+    //         if(gradient_mag.at<uchar>(y, x)> 80  || gradient_mag.at<uchar>(y+1, x)> 80 )  {
+    //             if (p0.x != -1 && p0.y != -1)  {
+    //                 p1 = Point(x, y);
+    //             } else {
+    //                 p0 = Point(x, y);
+    //                 p1 = Point(x, y);
+                    
+    //             }
+    //         } else {
+    //             line(img,p0,p1,color,1,8,0);
+    //             p0 = Point(-1, -1);
+    //             p1 =Point(-1, -1);
+    //         }
+    //     }
+        
+    //  }
 }
 
 vector<Line> houghTransformLines(string imgName, Mat &gradient_mag, Mat &gradient_dir, double thresh_val)  {
@@ -209,7 +229,7 @@ vector<Line> houghTransformLines(string imgName, Mat &gradient_mag, Mat &gradien
     int count = 0;
     for (int p = 0; p < hough_out.rows; p++) {
         for (int t = 0; t < hough_out.cols; t++) {
-            if (hough_out.at<uchar>(p, t) > 50) {
+            if (hough_out.at<uchar>(p, t) > 40) {
                 double m = - cos(t * M_PI / 180) / sin(t * M_PI / 180);
                 double c = (p - min) / sin(t * M_PI / 180);
                 Point p1(200, round(m * 200 + c));
@@ -217,12 +237,12 @@ vector<Line> houghTransformLines(string imgName, Mat &gradient_mag, Mat &gradien
                 Line line = Line(m, c);
                 lines.push_back(line);
 
-                // line(image, p1, p2, Scalar(0, 255, 0), 2, 8, 0);
-                // fullLine(colour_image, p1, p2, Scalar(255, 255, 0), m);
+                //line(image, p1, p2, Scalar(0, 255, 0), 2, 8, 0);
+                fullLine(colour_image, p1, p2, Scalar(255, 255, 0), m, normalized, c);
             }
         }
     }
-    // imwrite("lines.jpg", colour_image);
+    imwrite("lines.jpg", colour_image);
     printf("Done lines\n");
 
     return lines;
@@ -284,7 +304,7 @@ vector<Circle> HoughTransformCircles(string imgName, Mat &gradient_mag, Mat &gra
     for (int y = 0; y < image.rows; y++)    {
         for (int x = 0; x < image.cols; x++)  {
             for (int r = 0; r < rLen; r++)  {
-                if (houghSpace[y][x][r] > 35)  {
+                if (houghSpace[y][x][r] > 30)  {
                     Circle temp  = Circle(x, y, r);
                     circles.push_back(temp);
                     // circle(image, Point(x, y), r, Scalar(255, 255, 255), 2, 0);

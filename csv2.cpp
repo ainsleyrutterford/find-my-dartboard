@@ -127,7 +127,7 @@ void write_hough_info(string image, vector<Circle> circles, vector<Line> lines, 
         double c = lines.at(i).c;
         Point p1(200, round(m * 200 + c));
         Point p2(300, round(m * 300 + c));
-        fullLine(frame, p1, p2, Scalar(255, 255, 0), m);
+        //fullLine(frame, p1, p2, Scalar(255, 255, 0), m);
     }
     for (int i = 0; i < rects.size(); i++) {
         rectangle(frame, rects.at(i), Scalar(0, 255, 0), 2);
@@ -422,6 +422,7 @@ int main(int n, char **args) {
         cout << "image " << i << " done.\n";
     }
 
+    detected_rects = find_detected_rects(data);
     vector<vector<double> > original_f1scores = calc_f1scores(truth_rects, detected_rects);
     vector<vector<double> > filtered_f1scores = calc_f1scores(truth_rects, new_rects);
 
