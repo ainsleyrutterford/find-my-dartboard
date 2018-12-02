@@ -413,8 +413,8 @@ int main(int n, char **args) {
         string image_name = "darts/" + data.at(i).at(0);
         Mat image = imread(imgName, IMREAD_GRAYSCALE);
         getGradients(image, grad_mag, grad_dir);
-        vector<Line> lines = houghTransformLines(image_name, grad_mag, grad_dir, 230.0);
-        vector<Circle> circles = HoughTransformCircles(image_name, grad_mag, grad_dir, 230.0);
+        vector<Line> lines = houghTransformLines(image, grad_mag, grad_dir, 230.0);
+        vector<Circle> circles = HoughTransformCircles(image, grad_mag, grad_dir, 230.0);
         vector<Rect> filtered_rects = update_detections(detected_rects.at(i), circles, lines);
 
         write_hough_info(data.at(i).at(0), circles, lines, filtered_rects);
