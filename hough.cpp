@@ -11,6 +11,36 @@
 using namespace cv;
 using namespace std;
 
+void calc_gradient_mag(Mat &left, Mat &right, Mat &out) {
+    out.create(left.size(), CV_64F);
+    for (int y = 0; y < left.rows; y++) {
+        for (int x = 0; x < left.cols; x++) {
+            double result = sqrt( pow((int)left.at<double>(y,x),2) + (int)pow(right.at<double>(y,x),2) );
+            out.at<double>(y,x) = result;
+        }
+	}
+}
+void calc_gradient_dir(Mat &left, Mat &right, Mat &out)  {
+    out.create(left.size(), CV_64F);
+
+    for (int y = 0; y < left.rows; y++) {
+        for (int x = 0; x < left.cols; x++) {
+            double result = atan2((right.at<double>(y,x)) , left.at<double>(y,x));
+            out.at<double>(y,x) = result;
+        }
+    }
+}
+
+void imageToDouble(Mat &input, Mat &out)  {
+    out.create(input.size(), CV_64F);
+
+
+    for ( int i = 0; i < input.rows; i++ ) {
+        for( int j = 0; j < input.cols; j++ ) {
+						out.at<double>(i, j) = (double)input.at<uchar>(i, j);
+				}
+		}
+}
 void convolution(cv::Mat &input, Mat &kernel, int size, cv::Mat &blurredOutput) {
     // intialise the output using the input
     blurredOutput.create(input.size(), CV_64F);
@@ -107,36 +137,7 @@ void getGradients(string imgName, Mat &grad_mag, Mat &grad_dir)  {
     sobel(image, grad_mag, grad_dir);
     cout << "sobel finished\n";
 }
-void calc_gradient_mag(Mat &left, Mat &right, Mat &out) {
-    out.create(left.size(), CV_64F);
-    for (int y = 0; y < left.rows; y++) {
-        for (int x = 0; x < left.cols; x++) {
-            double result = sqrt( pow((int)left.at<double>(y,x),2) + (int)pow(right.at<double>(y,x),2) );
-            out.at<double>(y,x) = result;
-        }
-	}
-}
-void calc_gradient_dir(Mat &left, Mat &right, Mat &out)  {
-    out.create(left.size(), CV_64F);
 
-    for (int y = 0; y < left.rows; y++) {
-        for (int x = 0; x < left.cols; x++) {
-            double result = atan2((right.at<double>(y,x)) , left.at<double>(y,x));
-            out.at<double>(y,x) = result;
-        }
-    }
-}
-
-void imageToDouble(Mat &input, Mat &out)  {
-    out.create(input.size(), CV_64F);
-
-
-    for ( int i = 0; i < input.rows; i++ ) {
-        for( int j = 0; j < input.cols; j++ ) {
-						out.at<double>(i, j) = (double)input.at<uchar>(i, j);
-				}
-		}
-}
 
 
 
