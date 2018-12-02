@@ -50,7 +50,34 @@ void convolution(cv::Mat &input, Mat &kernel, int size, cv::Mat &blurredOutput) 
         }
     }
 }
+void sobel(Mat &image, Mat &gradient_mag, Mat &gradient_dir) {
+    // // create the Gaussian kernel in 1D
+    cv::Mat kX = cv::getGaussianKernel(3, -1);
+    cv::Mat kY = cv::getGaussianKernel(3, -1);
 
+    // // make it 2D multiply one by the transpose of the other
+    cv::Mat kernelG = kX * kY.t();
+
+    Mat kernelX = (Mat_<double>(3,3) << -1, 0, 1, -2, 0, 2, -1, 0, 1);
+    Mat kernelY = (Mat_<double>(3,3) << -1, -2, -1, 0, 0, 0, 1, 2, 1);
+
+    Mat outputX, outputY, doubleImage, blurredImage;
+	imageToDouble(image, doubleImage);
+    convolution(doubleImage, kernelG, 3, blurredImage);
+    convolution(blurredImage, kernelX, 3, outputX);
+    convolution(blurredImage, kernelY, 3, outputY);
+    calc_gradient_mag(outputX, outputY, gradient_mag);
+    calc_gradient_dir(outputX, outputY, gradient_dir);
+	// Mat uX, uY, uGMag, uGDir;
+    // normalize(outputX, uX);
+    // imwrite("outputX.jpg", uX);
+    // normalize(outputY, uY);
+    // imwrite("outputY.jpg", uY);
+    // normalize(gradient_dir, uGDir);
+    // imwrite("outputDir.jpg", uGDir);
+    // normalize(gradient_mag, uGMag);
+    // imwrite("outputMag.jpg", uGMag)
+}
 void normalize(Mat &M, Mat &out)  {
     out.create(M.size(), CV_8U);
 
@@ -75,38 +102,29 @@ void normalize(Mat &M, Mat &out)  {
 				}
 		}
 }
-
+void getGradients(string imgName, Mat &grad_mag, Mat &grad_dir)  {
+    Mat image = imread(imgName, IMREAD_GRAYSCALE);
+    sobel(image, grad_mag, grad_dir);
+    cout << "sobel finished\n";
+}
 void calc_gradient_mag(Mat &left, Mat &right, Mat &out) {
-
-    // out.create(left.size(), CV_8U);
     out.create(left.size(), CV_64F);
-		Mat unNormalised;
-		left.copyTo(unNormalised);
-
     for (int y = 0; y < left.rows; y++) {
         for (int x = 0; x < left.cols; x++) {
             double result = sqrt( pow((int)left.at<double>(y,x),2) + (int)pow(right.at<double>(y,x),2) );
-            unNormalised.at<double>(y,x) = result;
+            out.at<double>(y,x) = result;
         }
 	}
-    unNormalised.copyTo(out);
-	// normalize(unNormalised, out);
 }
-
 void calc_gradient_dir(Mat &left, Mat &right, Mat &out)  {
-    // out.create(left.size(), CV_8U);
     out.create(left.size(), CV_64F);
-	Mat unNormalised;
-	left.copyTo(unNormalised);
 
     for (int y = 0; y < left.rows; y++) {
         for (int x = 0; x < left.cols; x++) {
             double result = atan2((right.at<double>(y,x)) , left.at<double>(y,x));
-            unNormalised.at<double>(y,x) = result;
+            out.at<double>(y,x) = result;
         }
     }
-    unNormalised.copyTo(out);
-	// normalize(unNormalised, out);
 }
 
 void imageToDouble(Mat &input, Mat &out)  {
@@ -121,39 +139,6 @@ void imageToDouble(Mat &input, Mat &out)  {
 }
 
 
-void sobel(Mat &image, Mat &gradient_mag, Mat &gradient_dir) {
-    // // create the Gaussian kernel in 1D
-    cv::Mat kX = cv::getGaussianKernel(3, -1);
-    cv::Mat kY = cv::getGaussianKernel(3, -1);
-
-    // // make it 2D multiply one by the transpose of the other
-    cv::Mat kernelG = kX * kY.t();
-
-    Mat kernelX = (Mat_<double>(3,3) << -1, 0, 1, -2, 0, 2, -1, 0, 1);
-    Mat kernelY = (Mat_<double>(3,3) << -1, -2, -1, 0, 0, 0, 1, 2, 1);
-
-    Mat outputX, outputY, doubleImage, blurredImage;
-
-	imageToDouble(image, doubleImage);
-	normalize(doubleImage, image);
-    imwrite("test.jpg", image);
-
-
-    convolution(doubleImage, kernelG, 3, blurredImage);
-    convolution(blurredImage, kernelX, 3, outputX);
-	Mat uX, uY, uGMag, uGDir;
-	normalize(outputX, uX);
-    imwrite("outputX.jpg", uX);
-    convolution(blurredImage, kernelY, 3, outputY);
-	normalize(outputY, uY);
-    imwrite("outputY.jpg", uY);
-    calc_gradient_mag(outputX, outputY, gradient_mag);
-    normalize(gradient_mag, uGMag);
-    imwrite("outputMag.jpg", uGMag);
-    calc_gradient_dir(outputX, outputY, gradient_dir);
-    normalize(gradient_dir, uGDir);
-    imwrite("outputDir.jpg", uGDir);
-}
 
 void fullLine(cv::Mat &img, cv::Point a, cv::Point b, cv::Scalar color, double m, Mat &gradient_mag, double c) {
      Point p(0,0), q(img.cols,img.rows);
@@ -264,7 +249,6 @@ int *** allocate3DArray(int y, int x, int r)  {
 
 }
 
-
 void free3d(int ***arr, int y, int x, int r)  {
     for (int i = 0; i < y; i++)  {
         for (int j = 0; j < x; j++)  {
@@ -335,8 +319,3 @@ vector<Circle> HoughTransformCircles(string imgName, Mat &gradient_mag, Mat &gra
 }
 
 
-void getGradients(string imgName, Mat &grad_mag, Mat &grad_dir)  {
-    Mat image = imread(imgName, IMREAD_GRAYSCALE);
-    sobel(image, grad_mag, grad_dir);
-    cout << "sobel finished\n";
-}
