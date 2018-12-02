@@ -411,7 +411,7 @@ int main(int n, char **args) {
     vector<vector<Rect> > new_rects;
     for (int i = 0; i < data.size(); i++) {
         string image_name = "darts/" + data.at(i).at(0);
-        Mat image = imread(imgName, IMREAD_GRAYSCALE);
+        Mat image = imread(image_name, IMREAD_GRAYSCALE);
         getGradients(image, grad_mag, grad_dir);
         vector<Line> lines = houghTransformLines(image, grad_mag, grad_dir, 230.0);
         vector<Circle> circles = HoughTransformCircles(image, grad_mag, grad_dir, 230.0);
