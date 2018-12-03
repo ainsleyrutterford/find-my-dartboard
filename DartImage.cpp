@@ -37,7 +37,7 @@ class DartImage {
         string getImageName()  {
             return name;
         }
-        &Mat getImage()  {
+        Mat getImage()  {
             return image;
         }
         vector<Rect> getTruthRects()  {
