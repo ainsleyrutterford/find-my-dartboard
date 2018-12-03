@@ -142,7 +142,7 @@ vector<Rect> update_detections(vector<Rect> detected_rects, vector<Circle> circl
         vector<Line> linesNearCenter;
         Rect r = detected_rects.at(i);
         for (int l = 0; l < lines.size(); l++) {
-            if(lines.at(l).distance_to_line(r) < 10)
+            if(lines.at(l).distance_to_line(r) < 5)
                 linesNearCenter.push_back(lines.at(l));
         }
         int gradients[11];
