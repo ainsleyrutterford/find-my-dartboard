@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <opencv/cv.hpp>
 #include "hough.cpp"
+#include "DartImage.cpp"
 
 using namespace std;
 using namespace cv;
@@ -30,79 +31,58 @@ vector<vector<string> > readCSV(string filename) {
     return M;
 }
 
-vector<vector<Rect> > find_truth_rects(vector<vector<string> > data) {
-    vector<vector<Rect> > rects;
+vector<DartImage> set_rects(vector<vector<string> > data) {
+    vector<DartImage> dartImages;
     for (int i = 0; i < data.size(); i++) {
         int num_rects = (data.at(i).size() - 1) / 4;
-        vector<Rect> line;
+        DartImage dartImage(data.at(i).at(0));
         for (int j = 0; j < num_rects; j++) {
             int x = stoi(data.at(i).at((j*4)+1));
             int y = stoi(data.at(i).at((j*4)+2));
             int w = stoi(data.at(i).at((j*4)+3));
             int h = stoi(data.at(i).at((j*4)+4));
-            Rect rect(x, y, w, h);
-            line.push_back(rect);
+            dartImage.addTruthRect(Rect(x, y, w, h));
         }
-        rects.push_back(line);
+        dartImages.push_back(DartImage);
+        dartImages.setDetectedRects()
     }
-    return rects;
+    return dartImages;
 }
 
-vector<Rect> detected_rects_per_image(Mat frame) {
-    vector<Rect> faces;
-    Mat frame_gray;
-    cvtColor(frame, frame_gray, CV_BGR2GRAY);
-	equalizeHist(frame_gray, frame_gray);
-    cascade.detectMultiScale(frame_gray, faces, 1.1, 1, 0|CV_HAAR_SCALE_IMAGE, Size(50, 50), Size(500,500));
-    return faces;
-}
+// void write_truth_images(vector<vector<string> > data) {
+//     vector<vector<Rect> > truth_rects = find_truth_rects(data);
+//     for (int i = 0; i < truth_rects.size(); i++) {
+//         string filename = "darts/" + data.at(i).at(0);
+//         Mat frame = imread(filename, CV_LOAD_IMAGE_COLOR);
+//         for (int j = 0; j < truth_rects.at(i).size(); j++) {
+//             Rect rect = truth_rects.at(i).at(j);
+//             rectangle(frame, Point(rect.x, rect.y), Point(rect.x + rect.width, rect.y + rect.height), Scalar(255, 255, 0), 2);
+//         }
+//         imwrite("subtask2.1/truth" + data.at(i).at(0), frame);
+//     }
+// }
 
-vector<vector<Rect> > find_detected_rects(vector<vector<string> > data) {
-    vector<vector<Rect> > rects;
-    Mat frame;
-    for (int i = 0; i < data.size(); i++) {
-        string filename = "darts/" + data.at(i).at(0);
-        frame = imread(filename, CV_LOAD_IMAGE_COLOR);
-        rects.push_back(detected_rects_per_image(frame));
-    }
-    return rects;
-}
+// void write_detected_images(vector<vector<string> > data) {
+//     vector<vector<Rect> > detected_rects = find_detected_rects(data);
+//     for (int i = 0; i < detected_rects.size(); i++) {
+//         string filename = "darts/" + data.at(i).at(0);
+//         Mat frame = imread(filename, CV_LOAD_IMAGE_COLOR);
+//         for (int j = 0; j < detected_rects.at(i).size(); j++) {
+//             Rect rect = detected_rects.at(i).at(j);
+//             rectangle(frame, Point(rect.x, rect.y), Point(rect.x + rect.width, rect.y + rect.height), Scalar(0, 255, 0), 2);
+//         }
+//         imwrite("subtask2.1/det" + data.at(i).at(0), frame);
+//     }
+// }
 
-void write_truth_images(vector<vector<string> > data) {
-    vector<vector<Rect> > truth_rects = find_truth_rects(data);
-    for (int i = 0; i < truth_rects.size(); i++) {
-        string filename = "darts/" + data.at(i).at(0);
+void write_images(vector<DartImage> dartImages) {
+    for (int i = 0; i < dartImages.size(); i++) {
+        string filename = "darts/" + dartImages.at(i).getImageName());
         Mat frame = imread(filename, CV_LOAD_IMAGE_COLOR);
-        for (int j = 0; j < truth_rects.at(i).size(); j++) {
-            Rect rect = truth_rects.at(i).at(j);
-            rectangle(frame, Point(rect.x, rect.y), Point(rect.x + rect.width, rect.y + rect.height), Scalar(255, 255, 0), 2);
+        for (int j = 0; j < dartImages.at(i).getFilteredRects().size(); j++) {
+            rectangle(frame, dartImages.at(i).getFilteredRects().at(j), Scalar(0, 255, 0), 2);
         }
-        imwrite("subtask2.1/truth" + data.at(i).at(0), frame);
-    }
-}
-
-void write_detected_images(vector<vector<string> > data) {
-    vector<vector<Rect> > detected_rects = find_detected_rects(data);
-    for (int i = 0; i < detected_rects.size(); i++) {
-        string filename = "darts/" + data.at(i).at(0);
-        Mat frame = imread(filename, CV_LOAD_IMAGE_COLOR);
-        for (int j = 0; j < detected_rects.at(i).size(); j++) {
-            Rect rect = detected_rects.at(i).at(j);
-            rectangle(frame, Point(rect.x, rect.y), Point(rect.x + rect.width, rect.y + rect.height), Scalar(0, 255, 0), 2);
-        }
-        imwrite("subtask2.1/det" + data.at(i).at(0), frame);
-    }
-}
-
-void write_images(vector<vector<string> > data, vector<vector<Rect> > rect_vector) {
-    for (int i = 0; i < rect_vector.size(); i++) {
-        string filename = "darts/" + data.at(i).at(0);
-        Mat frame = imread(filename, CV_LOAD_IMAGE_COLOR);
-        for (int j = 0; j < rect_vector.at(i).size(); j++) {
-            Rect rect = rect_vector.at(i).at(j);
-            rectangle(frame, Point(rect.x, rect.y), Point(rect.x + rect.width, rect.y + rect.height), Scalar(0, 255, 0), 2);
-        }
-        imwrite("subtask3/filtered" + data.at(i).at(0), frame);
+        imwrite("subtask3/filtered" + dartImages.at(i).getImageName(), frame);
     }
 }
 
@@ -125,23 +105,21 @@ void write_hough_info(string image, vector<Circle> circles, vector<Line> lines, 
     imwrite("subtask3/everything" + image, frame);
 }
 
-void write_both_images(vector<vector<string> > data) {
-    vector<vector<Rect> > truth_rects = find_truth_rects(data);
-    vector<vector<Rect> > detected_rects = find_detected_rects(data);
-    for (int i = 0; i < truth_rects.size(); i++) {
-        string filename = "darts/" + data.at(i).at(0);
-        Mat frame = imread(filename, CV_LOAD_IMAGE_COLOR);
-        for (int j = 0; j < truth_rects.at(i).size(); j++) {
-            Rect rect = truth_rects.at(i).at(j);
-            rectangle(frame, Point(rect.x, rect.y), Point(rect.x + rect.width, rect.y + rect.height), Scalar(255, 255, 0), 2);
-        }
-        for (int j = 0; j < detected_rects.at(i).size(); j++) {
-            Rect rect = detected_rects.at(i).at(j);
-            rectangle(frame, Point(rect.x, rect.y), Point(rect.x + rect.width, rect.y + rect.height), Scalar(0, 255, 0), 2);
-        }
-        imwrite("subtask2.1/both" + data.at(i).at(0), frame);
-    }
-}
+// void write_both_images(vector<DartImage> dartImages) {
+//     for (int i = 0; i < dartImages.size(); i++) {
+//         string filename = "darts/" + dartImages.at(i).getImageName();
+//         Mat frame = imread(filename, CV_LOAD_IMAGE_COLOR);
+//         for (int j = 0; j < truth_rects.at(i).size(); j++) {
+//             Rect rect = truth_rects.at(i).at(j);
+//             rectangle(frame, Point(rect.x, rect.y), Point(rect.x + rect.width, rect.y + rect.height), Scalar(255, 255, 0), 2);
+//         }
+//         for (int j = 0; j < detected_rects.at(i).size(); j++) {
+//             Rect rect = detected_rects.at(i).at(j);
+//             rectangle(frame, Point(rect.x, rect.y), Point(rect.x + rect.width, rect.y + rect.height), Scalar(0, 255, 0), 2);
+//         }
+//         imwrite("subtask2.1/both" + data.at(i).at(0), frame);
+//     }
+// }
 
 double percentage_overlap(Rect truth, Rect detected) {
     Rect intersect = truth & detected;
@@ -328,39 +306,30 @@ vector<Rect> update_detections(vector<Rect> detected_rects, vector<Circle> circl
 
 int main(int n, char **args) {
     if (!cascade.load(cascade_name)) printf("--(!)Error loading\n");
-    vector<vector<string> > data = readCSV("data.csv");
-    vector<vector<Rect> > truth_rects = find_truth_rects(data);
-    vector<vector<Rect> > detected_rects = find_detected_rects(data);
+    vector<vector<string> > ground_truth_string_data = readCSV("data.csv");
+    vector<DartImage> dartImages = set_rects(data);
 
     Mat grad_dir, grad_mag;
-
     vector<vector<Rect> > new_rects;
-    for (int i = 0; i < data.size(); i++) {
-        string image_name = "darts/" + data.at(i).at(0);
-        Mat image = imread(image_name, IMREAD_GRAYSCALE);
-        getGradients(image, grad_mag, grad_dir);
+
+    for (int i = 0; i < dartImages.size(); i++) {
+        getGradients(dartImages.at(i).getImage(), grad_mag, grad_dir);
         vector<Line> lines = houghTransformLines(image, grad_mag, grad_dir);
         vector<Circle> circles = HoughTransformCircles(image, grad_mag, grad_dir);
-        vector<Rect> filtered_rects = update_detections(detected_rects.at(i), circles, lines);
+        vector<Rect> filtered_rects = update_detections(dartImages.at(i).getDetectedRects(), circles, lines);
 
-        write_hough_info(data.at(i).at(0), circles, lines, filtered_rects);
+        write_hough_info(dartImages.at(i).getImageName(), circles, lines, filtered_rects);
 
-        new_rects.push_back(filtered_rects);
+        dartImages.at(i).setFilteredRects(filtered_rects);
         cout << "image " << i << " done.\n";
     }
 
-    detected_rects = find_detected_rects(data);
-    vector<vector<double> > original_f1scores = calc_f1scores(truth_rects, detected_rects);
-    vector<vector<double> > filtered_f1scores = calc_f1scores(truth_rects, new_rects);
+
+    vector<vector<double> > original_f1scores = calc_f1scores(dartImages.at(i).getTruthRects(), (dartImages.at(i).getDetectedRects());
+    vector<vector<double> > filtered_f1scores = calc_f1scores(dartImages.at(i).getTruthRects(), (dartImages.at(i).getFilteredRects());
 
     print_f1scores(original_f1scores);
     print_f1scores(filtered_f1scores);
 
-    write_images(data, new_rects);
-    // vector<Circle> circles;
-    // vector<Line> lines;
-    //cout << lines->size() <<"\n";
-    // write_truth_images(data);
-    // write_detected_images(data);
-    // write_both_images(data);
+    write_images(dartImages);
 }
