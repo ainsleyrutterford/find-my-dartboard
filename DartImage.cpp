@@ -73,8 +73,8 @@ class DartImage {
                 }
                 if (max_overlap >= 0.45) true_positives++;
             }
-            int false_positives = detected_rects.at(i).size() - true_positives;
-            int false_negatives = truth_rects.at(i).size() - true_positives;
+            int false_positives = detected_rects.size() - true_positives;
+            int false_negatives = truth_rects.size() - true_positives;
             double f1 = f1score(true_positives, false_positives, false_negatives);
             return f1;
         }
@@ -88,8 +88,8 @@ class DartImage {
                 }
                 if (max_overlap >= 0.45) true_positives++;
             }
-            int false_positives = filtered_rects.at(i).size() - true_positives;
-            int false_negatives = truth_rects.at(i).size() - true_positives;
+            int false_positives = filtered_rects.size() - true_positives;
+            int false_negatives = truth_rects.size() - true_positives;
             double f1 = f1score(true_positives, false_positives, false_negatives);
             return f1;
         }
