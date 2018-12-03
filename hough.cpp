@@ -126,7 +126,6 @@ void normalize(Mat &M, Mat &out)  {
 }
 void getGradients(Mat image, Mat &grad_mag, Mat &grad_dir)  {
     sobel(image, grad_mag, grad_dir);
-    cout << "sobel finished\n";
 }
 
 void fullLine(cv::Mat &img, cv::Point a, cv::Point b, cv::Scalar color, double m, Mat &gradient_mag, double c) {

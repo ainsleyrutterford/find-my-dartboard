@@ -96,19 +96,7 @@ double one_way_overlap(Rect bigger, Rect smaller) {
 }
 
 
-double cross_product( Point a, Point b ){
-   return a.x*b.y - a.y*b.x;
-}
 
-double distance_to_line( Point begin, Point end, Point x ){
-   //translate the begin to the origin
-   end -= begin;
-   x -= begin;
-
-   //¿do you see the triangle?
-   double area = cross_product(x, end);
-   return abs(area / norm(end));
-}
 
 vector<Rect> update_detections(vector<Rect> detected_rects, vector<Circle> circles, vector<Line> lines) {
 
@@ -154,9 +142,7 @@ vector<Rect> update_detections(vector<Rect> detected_rects, vector<Circle> circl
         vector<Line> linesNearCenter;
         Rect r = detected_rects.at(i);
         for (int l = 0; l < lines.size(); l++) {
-            if(distance_to_line(Point(r.x, lines.at(l).getY(r.x)),
-                                Point(r.x+r.width, lines.at(l).getY(r.x+r.width)),
-                                Point(r.x+r.width/2, r.y+r.height/2)) < 10)
+            if(lines.at(l).distance_to_line(r) < 10)
                 linesNearCenter.push_back(lines.at(l));
         }
         int gradients[11];
@@ -172,31 +158,11 @@ vector<Rect> update_detections(vector<Rect> detected_rects, vector<Circle> circl
     }
 
 
-
-    // //Voting for rectangles that have an intersection near the center
-    // for (int i = 0; i < detected_rects.size(); i++) {
-    //     int vote = 0;
-    //     for (int l1 = 0; l1 < lines.size(); l1++) {
-    //         for (int l2 = 0; l2 < lines.size(); l2++) {
-    //             if (l1 != l2) {
-    //                 int allowedError = 0.4*detected_rects.at(i).width/2;
-    //                 Point rect_center = Point(detected_rects.at(i).x + detected_rects.at(i).width/2,
-    //                                           detected_rects.at(i).y + detected_rects.at(i).height/2);
-    //                 Point intersect = intersection(lines.at(l1).m,lines.at(l2).m, lines.at(l1).c, lines.at(l2).c);
-    //                 if (abs(rect_center.x - intersect.x) < allowedError && abs(rect_center.y - intersect.y) < allowedError/2) {
-    //                     vote++;
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     line_votes.push_back(vote);
-    // }
-
     vector<Rect> final_detections;
 
     //Vote counting
     for (int i = 0; i < detected_rects.size(); i++) {
-        printf("Rectangle votes\n Circle %d\n Lines2 %d\n", circle_votes.at(i), line_votes2.at(i));
+        // printf("Rectangle votes\n Circle %d\n Lines2 %d\n", circle_votes.at(i), line_votes2.at(i));
         if (circle_votes.at(i) +line_votes2.at(i)/2 > 1) {
             final_detections.push_back(detected_rects.at(i));
         }
@@ -235,9 +201,6 @@ int main(int n, char **args) {
         dartImage.setFilteredRects(filtered_rects);
         origf1scores.push_back(dartImage.calc_original_f1());
         newf1scores.push_back(dartImage.calc_new_f1());
-        printf("Size of DR %lu\n", dartImage.getDetectedRects().size());
-        printf("Size of FR  %lu\n", dartImage.getFilteredRects().size());
-        printf("Size of TR %lu\n", dartImage.getTruthRects().size());
         cout << "image " << i << " done.\n";
     }
 
