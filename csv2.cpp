@@ -8,7 +8,7 @@
 #include <opencv/cv.hpp>
 #include "hough.cpp"
 #include "DartImage.cpp"
-
+#include "omp.h"
 using namespace std;
 using namespace cv;
 
@@ -190,6 +190,8 @@ int main(int n, char **args) {
     vector<vector<Rect> > new_rects;
     int origf1scores[dartImages.size()];
     int newf1scores[dartImages.size()];
+    #pragma omp parallel
+    #pragma omp for 
     for (int i = 0; i < dartImages.size(); i++) {
         DartImage dartImage = dartImages.at(i);
         getGradients(dartImage.getImage(), grad_mag, grad_dir);
@@ -199,7 +201,7 @@ int main(int n, char **args) {
         write_hough_info(dartImage.getImageName(), circles, lines, filtered_rects);
 
         dartImage.setFilteredRects(filtered_rects);
-        origf1scores[i] = dartImage.calc_original_f1()];
+        origf1scores[i] = dartImage.calc_original_f1();
         newf1scores[i] = dartImage.calc_new_f1();
         cout << "image " << i << " done.\n";
     }
@@ -208,8 +210,8 @@ int main(int n, char **args) {
     double sumOrigF1 = 0.0;
 
     for (int i = 0; i < dartImages.size(); i++)  {
-        sumNewF1  += newf1scores.at[i];
-        sumOrigF1 += origf1scores.at[i];
+        sumNewF1  += newf1scores[i];
+        sumOrigF1 += origf1scores[i];
     }
     printf("Original F1 Score %f\n", sumOrigF1/dartImages.size());
     printf("New F1 Score %f\n", sumNewF1/dartImages.size());
