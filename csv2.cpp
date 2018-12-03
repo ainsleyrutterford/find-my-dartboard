@@ -227,7 +227,7 @@ vector<Rect> filterRects(vector<Rect> detectedRects, vector<Circle> circles, vec
     for (int i = 0; i < filteredRects1.size(); i++)  {
         for (int l=0; l < lines.size(); l++)  {
             for (int l1=1; l1 < lines.size(); l1++)  {
-                 if (filteredRects1.at(i).contains(lines.at(l).getIntersection(lines.at(l1)))
+                 if (filteredRects1.at(i).contains(lines.at(l).getIntersection(lines.at(l1))))
                     intersectionCounts[i]++;
             }
         }
