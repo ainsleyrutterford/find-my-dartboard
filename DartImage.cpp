@@ -31,8 +31,7 @@ class DartImage {
     public:
         DartImage(string name) {
             this->name = "darts/" + name;
-            image = imread(name, IMREAD_GRAYSCALE);
-            printf("%s\n", name.c_str());
+            image = imread(this->name, IMREAD_GRAYSCALE);
 
         }
 
