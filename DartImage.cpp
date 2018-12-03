@@ -40,10 +40,10 @@ class DartImage {
                                      1.1, 1, 0|CV_HAAR_SCALE_IMAGE, Size(50, 50), Size(500,500));
             this->detected_rects = detected_rects;
         }
-        void setFilteredRects(vector<Rect> filteredRects)  {
-            filtered_rects = filteredRects;
+        void setFilteredRects(vector<Rect> filtered_rects)  {
+            this->filtered_rects = filtered_rects;
         }
         vector<Rect> getFilteredRects()  {
-            return filteredRects;
+            return filtered_rects;
         }
 };
