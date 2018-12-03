@@ -206,44 +206,6 @@ void print_f1scores(vector<vector<double> > f1scores) {
     cout << "Average f1 score: " << ave << "\n";
 }
 
-vector<Rect> filterRects(vector<Rect> detectedRects, vector<Circle> circles, vector<Line> lines)  {
-    printf("Circle size: %lu  Lines Size: %lu  Det Rect Size: %lu\n", circles.size(), lines.size(), detectedRects.size());
-    vector<Rect> filteredRects1;
-    for (int i = 0; i < detectedRects.size(); i++)  {
-        for (int c=0; c < circles.size(); c++)  {
-            if (abs(detectedRects.at(i).x + detectedRects.at(i).width/2 - circles.at(c).x) < 20 &&
-                abs(detectedRects.at(i).y + detectedRects.at(i).height/2     - circles.at(c).y) < 20)  {
-                    filteredRects1.push_back(detectedRects.at(i));
-                    i++;
-                    c=-1;
-            }
-        }
-    }
-    printf("Circle size: %lu  Lines Size: %lu  Det Rect Size: %lu\n", circles.size(), lines.size(), filteredRects1.size());
-
-    int intersectionCounts[filteredRects1.size()];
-    for (int i = 0; i < filteredRects1.size(); i++)  intersectionCounts[i] = 0;
-
-    for (int i = 0; i < filteredRects1.size(); i++)  {
-        for (int l=0; l < lines.size(); l++)  {
-            for (int l1=1; l1 < lines.size(); l1++)  {
-                 if (filteredRects1.at(i).contains(lines.at(l).getIntersection(lines.at(l1))))
-                    intersectionCounts[i]++;
-            }
-        }
-    }
-    vector<Rect> filteredRects2;
-
-    for (int r = 0; r < filteredRects1.size(); r++)  {
-        if(intersectionCounts[r] > 2)  {
-            filteredRects2.push_back(filteredRects1.at(r));
-        }
-    }
-    printf("Circle size: %lu  Lines Size: %lu  Det Rect Size: %lu\n", circles.size(), lines.size(), filteredRects2.size());
-
-    return filteredRects2   ;
-}
-
 double cross_product( Point a, Point b ){
    return a.x*b.y - a.y*b.x;
 }
