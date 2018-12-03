@@ -12,9 +12,6 @@
 using namespace std;
 using namespace cv;
 
-String cascade_name = "dartcascade/cascade.xml";
-CascadeClassifier cascade;
-
 vector<vector<string> > readCSV(string filename) {
     vector<vector<string> > M;
     ifstream in(filename);
@@ -50,32 +47,6 @@ vector<DartImage> set_rects(vector<vector<string> > data) {
     return dartImages;
 }
 
-// void write_truth_images(vector<vector<string> > data) {
-//     vector<vector<Rect> > truth_rects = find_truth_rects(data);
-//     for (int i = 0; i < truth_rects.size(); i++) {
-//         string filename = "darts/" + data.at(i).at(0);
-//         Mat frame = imread(filename, CV_LOAD_IMAGE_COLOR);
-//         for (int j = 0; j < truth_rects.at(i).size(); j++) {
-//             Rect rect = truth_rects.at(i).at(j);
-//             rectangle(frame, Point(rect.x, rect.y), Point(rect.x + rect.width, rect.y + rect.height), Scalar(255, 255, 0), 2);
-//         }
-//         imwrite("subtask2.1/truth" + data.at(i).at(0), frame);
-//     }
-// }
-
-// void write_detected_images(vector<vector<string> > data) {
-//     vector<vector<Rect> > detected_rects = find_detected_rects(data);
-//     for (int i = 0; i < detected_rects.size(); i++) {
-//         string filename = "darts/" + data.at(i).at(0);
-//         Mat frame = imread(filename, CV_LOAD_IMAGE_COLOR);
-//         for (int j = 0; j < detected_rects.at(i).size(); j++) {
-//             Rect rect = detected_rects.at(i).at(j);
-//             rectangle(frame, Point(rect.x, rect.y), Point(rect.x + rect.width, rect.y + rect.height), Scalar(0, 255, 0), 2);
-//         }
-//         imwrite("subtask2.1/det" + data.at(i).at(0), frame);
-//     }
-// }
-
 void write_images(vector<DartImage> dartImages) {
     for (int i = 0; i < dartImages.size(); i++) {
         string filename = "darts/" + dartImages.at(i).getImageName();
@@ -87,8 +58,10 @@ void write_images(vector<DartImage> dartImages) {
     }
 }
 
-void write_hough_info(string image, vector<Circle> circles, vector<Line> lines, vector<Rect> rects) {
-    Mat frame = imread(image, CV_LOAD_IMAGE_COLOR);
+void write_hough_info(string image_name, vector<Circle> circles, vector<Line> lines, vector<Rect> rects) {
+    Mat frame = imread("darts/" + image_name, CV_LOAD_IMAGE_COLOR);
+
+    printf("%s\n", image_name);
     for (int i = 0; i < circles.size(); i++) {
         Circle c = circles.at(i);
         circle(frame, c.getCenter(), c.radius, Scalar(255, 0, 255), 2);
@@ -103,24 +76,9 @@ void write_hough_info(string image, vector<Circle> circles, vector<Line> lines, 
     for (int i = 0; i < rects.size(); i++) {
         rectangle(frame, rects.at(i), Scalar(0, 255, 0), 2);
     }
-    imwrite("subtask3/everything" + image, frame);
+    imwrite("subtask3/everything" + image_name, frame);
 }
 
-// void write_both_images(vector<DartImage> dartImages) {
-//     for (int i = 0; i < dartImages.size(); i++) {
-//         string filename = "darts/" + dartImages.at(i).getImageName();
-//         Mat frame = imread(filename, CV_LOAD_IMAGE_COLOR);
-//         for (int j = 0; j < truth_rects.at(i).size(); j++) {
-//             Rect rect = truth_rects.at(i).at(j);
-//             rectangle(frame, Point(rect.x, rect.y), Point(rect.x + rect.width, rect.y + rect.height), Scalar(255, 255, 0), 2);
-//         }
-//         for (int j = 0; j < detected_rects.at(i).size(); j++) {
-//             Rect rect = detected_rects.at(i).at(j);
-//             rectangle(frame, Point(rect.x, rect.y), Point(rect.x + rect.width, rect.y + rect.height), Scalar(0, 255, 0), 2);
-//         }
-//         imwrite("subtask2.1/both" + data.at(i).at(0), frame);
-//     }
-// }
 
 double percentage_overlap(Rect truth, Rect detected) {
     Rect intersect = truth & detected;
@@ -138,27 +96,6 @@ double one_way_overlap(Rect bigger, Rect smaller) {
     return overlap;
 }
 
-double f1score(double true_positives, double false_postives, double false_negatives) {
-    double precision = true_positives / (true_positives + false_postives);
-    double recall = true_positives / (true_positives + false_negatives);
-    if (true_positives ==  0) return 0;
-    double f1 = 2 * precision * recall / (precision + recall);
-    return f1;
-}
-
-
-
-void print_f1scores(vector<vector<double> > f1scores) {
-    for (int i = 0; i < f1scores.size(); i++) {
-        cout << i << ": ";
-        for (int j = 0; j < f1scores.at(i).size(); j++) cout << f1scores.at(i).at(j) << " ";
-        cout << "\n";
-    }
-    double sum = 0;
-    for (int i = 0; i < f1scores.size(); i++) sum += f1scores.at(i).at(3);
-    double ave = sum / f1scores.size();
-    cout << "Average f1 score: " << ave << "\n";
-}
 
 double cross_product( Point a, Point b ){
    return a.x*b.y - a.y*b.x;
@@ -316,8 +253,6 @@ int main(int n, char **args) {
     printf("New F1 Score %f\n", sumNewF1/newf1scores.size());
 
 
-    // print_f1scores(original_f1scores);
-    // print_f1scores(filtered_f1scores);
 
     write_images(dartImages);
 }
