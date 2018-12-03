@@ -188,8 +188,8 @@ int main(int n, char **args) {
 
     Mat grad_dir, grad_mag;
     vector<vector<Rect> > new_rects;
-    vector<double> origf1scores;
-    vector<double> newf1scores;
+    int origf1scores[dartImages.size()];
+    int newf1scores[dartImages.size()];
     for (int i = 0; i < dartImages.size(); i++) {
         DartImage dartImage = dartImages.at(i);
         getGradients(dartImage.getImage(), grad_mag, grad_dir);
@@ -199,20 +199,20 @@ int main(int n, char **args) {
         write_hough_info(dartImage.getImageName(), circles, lines, filtered_rects);
 
         dartImage.setFilteredRects(filtered_rects);
-        origf1scores.push_back(dartImage.calc_original_f1());
-        newf1scores.push_back(dartImage.calc_new_f1());
+        origf1scores[i] = dartImage.calc_original_f1()];
+        newf1scores[i] = dartImage.calc_new_f1();
         cout << "image " << i << " done.\n";
     }
 
     double sumNewF1 = 0.0;
     double sumOrigF1 = 0.0;
 
-    for (int i = 0; i < origf1scores.size(); i++)  {
-        sumNewF1  += newf1scores.at(i);
-        sumOrigF1 += origf1scores.at(i);
+    for (int i = 0; i < dartImages.size(); i++)  {
+        sumNewF1  += newf1scores.at[i];
+        sumOrigF1 += origf1scores.at[i];
     }
-    printf("Original F1 Score %f\n", sumOrigF1/origf1scores.size());
-    printf("New F1 Score %f\n", sumNewF1/newf1scores.size());
+    printf("Original F1 Score %f\n", sumOrigF1/dartImages.size());
+    printf("New F1 Score %f\n", sumNewF1/dartImages.size());
 
 
 
