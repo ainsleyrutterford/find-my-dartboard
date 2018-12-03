@@ -78,7 +78,7 @@ vector<DartImage> set_rects(vector<vector<string> > data) {
 
 void write_images(vector<DartImage> dartImages) {
     for (int i = 0; i < dartImages.size(); i++) {
-        string filename = "darts/" + dartImages.at(i).getImageName());
+        string filename = "darts/" + dartImages.at(i).getImageName();
         Mat frame = imread(filename, CV_LOAD_IMAGE_COLOR);
         for (int j = 0; j < dartImages.at(i).getFilteredRects().size(); j++) {
             rectangle(frame, dartImages.at(i).getFilteredRects().at(j), Scalar(0, 255, 0), 2);
@@ -308,7 +308,7 @@ vector<Rect> update_detections(vector<Rect> detected_rects, vector<Circle> circl
 int main(int n, char **args) {
     if (!cascade.load(cascade_name)) printf("--(!)Error loading\n");
     vector<vector<string> > ground_truth_string_data = readCSV("data.csv");
-    vector<DartImage> dartImages = set_rects(data);
+    vector<DartImage> dartImages = set_rects(ground_truth_string_data);
 
     Mat grad_dir, grad_mag;
     vector<vector<Rect> > new_rects;
