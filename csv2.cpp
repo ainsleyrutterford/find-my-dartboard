@@ -88,7 +88,7 @@ void write_images(vector<DartImage> dartImages) {
 }
 
 void write_hough_info(string image, vector<Circle> circles, vector<Line> lines, vector<Rect> rects) {
-    Mat frame = imread("darts/" + image, CV_LOAD_IMAGE_COLOR);
+    Mat frame = imread(image, CV_LOAD_IMAGE_COLOR);
     for (int i = 0; i < circles.size(); i++) {
         Circle c = circles.at(i);
         circle(frame, c.getCenter(), c.radius, Scalar(255, 0, 255), 2);
