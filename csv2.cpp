@@ -191,7 +191,7 @@ int main(int n, char **args) {
     int origf1scores[dartImages.size()];
     int newf1scores[dartImages.size()];
     #pragma omp parallel
-    #pragma omp for 
+    #pragma omp for private(dartImages)
     for (int i = 0; i < dartImages.size(); i++) {
         DartImage dartImage = dartImages.at(i);
         getGradients(dartImage.getImage(), grad_mag, grad_dir);
