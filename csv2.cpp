@@ -316,7 +316,7 @@ int main(int n, char **args) {
     for (int i = 0; i < dartImages.size(); i++) {
         DartImage dartImage = dartImages.at(i);
         getGradients(dartImage.getImage(), grad_mag, grad_dir);
-        vector<Line> lines = houghTransformLines(dartImage.getImage(), grad_mag, grad_dir);
+        vector<Line> lines = houghTransformLines(&dartImage.getImage(), grad_mag, grad_dir);
         vector<Circle> circles = HoughTransformCircles(dartImage.getImage(), grad_mag, grad_dir);
         vector<Rect> filtered_rects = update_detections(dartImage.getDetectedRects(), circles, lines);
 
