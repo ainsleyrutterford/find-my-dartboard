@@ -8,7 +8,7 @@
 #include <opencv/cv.hpp>
 #include "hough.cpp"
 #include "DartImage.cpp"
-#include "omp.h"
+// #include "omp.h"
 using namespace std;
 using namespace cv;
 
@@ -112,12 +112,11 @@ vector<Rect> update_detections(vector<Rect> detected_rects, vector<Circle> circl
         }
     }
 
-    for (int c = 0; c < circles.size(); c++) cout << "inner circle of " << c << " is " << inner_circle_of[c] << "\n";
 
     for (int c0 = 0; c0 < circles.size(); c0++) {
         for (int c1 = 0; c1 < circles.size(); c1++) {
             if (c0 != c1 && inner_circle_of[c1] == c0 && inner_circle_of[c0] == -1) {
-                cout << "adding outer circle: " << c1 << "\n";
+                // cout << "adding outer circle: " << c1 << "\n";
                 detected_rects.push_back(circles.at(c1).makeRect());
             }
         }
@@ -153,7 +152,7 @@ vector<Rect> update_detections(vector<Rect> detected_rects, vector<Circle> circl
         }
         int sum = 0;
         for (int g = 0; g < 11; g++)  sum += gradients[g];
-        printf("Diff line gradients %d\n", sum);
+        // printf("Diff line gradients %d\n", sum);
         line_votes2.push_back(sum);
     }
 
@@ -173,7 +172,6 @@ vector<Rect> update_detections(vector<Rect> detected_rects, vector<Circle> circl
         for(int r2 = 0; r2 < final_detections.size(); r2++)  {
             if (final_detections.at(r1).area() > final_detections.at(r2).area()) {
                 double overlap = one_way_overlap(final_detections.at(r1), final_detections.at(r2));
-                printf("%f\n", overlap);
                 if(overlap > 0.8)  final_detections.erase(final_detections.begin() + r2);
             }
         }
@@ -190,30 +188,46 @@ int main(int n, char **args) {
     vector<vector<Rect> > new_rects;
     int origf1scores[dartImages.size()];
     int newf1scores[dartImages.size()];
-    #pragma omp parallel
-    #pragma omp for private(dartImages)
+    DartImage dartImage;
+    vector<Line> lines;
+    vector<Circle> circles;
+    vector<Rect> filtered_rects;
+    double sumNewF1 = 0.0, sumNewRecall = 0.0, sumNewPrecision = 0.0;
+    double sumOrigF1 = 0.0, sumOrigRecall = 0.0, sumOrigPrecision = 0.0;
+    // #pragma omp parallel for shared(sumNewF1, sumOrigF1) private(dartImage, lines, circles, filtered_rects, grad_mag, grad_dir)
     for (int i = 0; i < dartImages.size(); i++) {
-        DartImage dartImage = dartImages.at(i);
+        dartImage = dartImages.at(i);
         getGradients(dartImage.getImage(), grad_mag, grad_dir);
-        vector<Line> lines = houghTransformLines(dartImage.getImage(), grad_mag, grad_dir);
-        vector<Circle> circles = HoughTransformCircles(dartImage.getImage(), grad_mag, grad_dir);
-        vector<Rect> filtered_rects = update_detections(dartImage.getDetectedRects(), circles, lines);
+        lines = houghTransformLines(dartImage.getImage(), grad_mag, grad_dir);
+        circles = HoughTransformCircles(dartImage.getImage(), grad_mag, grad_dir);
+        filtered_rects = update_detections(dartImage.getDetectedRects(), circles, lines);
         write_hough_info(dartImage.getImageName(), circles, lines, filtered_rects);
 
         dartImage.setFilteredRects(filtered_rects);
-        origf1scores[i] = dartImage.calc_original_f1();
-        newf1scores[i] = dartImage.calc_new_f1();
-        cout << "image " << i << " done.\n";
+        sumOrigF1 += dartImage.calc_original_f1();
+        sumNewF1 += dartImage.calc_new_f1();
+
+        sumOrigRecall += dartImage.calc_original_recall();
+        sumNewRecall += dartImage.calc_new_recall();
+        sumOrigPrecision += dartImage.calc_original_precision();
+        sumNewPrecision += dartImage.calc_new_precision();
+        
+        cout << "image " << i << " done.\n"<< "\n";
+
     }
 
-    double sumNewF1 = 0.0;
-    double sumOrigF1 = 0.0;
 
-    for (int i = 0; i < dartImages.size(); i++)  {
-        sumNewF1  += newf1scores[i];
-        sumOrigF1 += origf1scores[i];
-    }
+
+    // for (int i = 0; i < dartImages.size(); i++)  {
+    //     sumNewF1  += newf1scores[i];
+    //     sumOrigF1 += origf1scores[i];
+    // }
+
+    printf("Original Recall Score %f\n", sumOrigRecall/dartImages.size());
+    printf("Original Precision Score %f\n", sumOrigPrecision/dartImages.size());
     printf("Original F1 Score %f\n", sumOrigF1/dartImages.size());
+    printf("New Recall Score %f\n", sumNewRecall/dartImages.size());
+    printf("New Precision Score %f\n", sumNewPrecision/dartImages.size());
     printf("New F1 Score %f\n", sumNewF1/dartImages.size());
 
 

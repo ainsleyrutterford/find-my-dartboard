@@ -20,18 +20,79 @@ class DartImage {
             return overlap;
         }
 
-        double f1score(double true_positives, double false_postives, double false_negatives) {
-            double precision = true_positives / (true_positives + false_postives);
+        double f1score(double true_positives, double false_positives, double false_negatives) {
+            double precision = true_positives / (true_positives + false_positives);
+
             double recall = true_positives / (true_positives + false_negatives);
-            if (true_positives ==  0) return 0;
+            if (true_positives == 0 || (true_positives + false_positives) == 0 || (true_positives + false_negatives) ==  0) return 0;
             double f1 = 2 * precision * recall / (precision + recall);
             return f1;
+        }
+        double recall_score(double true_positives, double false_positives, double false_negatives) {
+            double recall = true_positives / (true_positives + false_negatives);
+            if (true_positives == 0 || true_positives + false_negatives ==  0) return 0;
+            return recall;
+        }
+
+        double precision_score(double true_positives, double false_positives, double false_negatives) {
+            double precision = true_positives / (true_positives + false_positives);
+            if (true_positives == 0 || true_positives + false_positives ==  0) return 0;
+            return precision;
+        }
+
+        double both_f1_score(vector<Rect> rects)  {
+            int true_positives = 0;
+            for (int j = 0; j < truth_rects.size(); j++) {
+                double max_overlap = 0.0;
+                for (int k = 0; k < rects.size(); k++) {
+                    double overlap = percentage_overlap(truth_rects.at(j), rects.at(k));
+                    if (overlap > max_overlap) max_overlap = overlap;
+                }
+                if (max_overlap >= 0.45) true_positives++;
+            }
+            int false_positives = rects.size() - true_positives;
+            int false_negatives = truth_rects.size() - true_positives;
+            double f1 = f1score(true_positives, false_positives, false_negatives);
+            return f1;
+        }
+        double both_recall_score(vector<Rect> rects)  {
+            int true_positives = 0;
+            for (int j = 0; j < truth_rects.size(); j++) {
+                double max_overlap = 0.0;
+                for (int k = 0; k < rects.size(); k++) {
+                    double overlap = percentage_overlap(truth_rects.at(j), rects.at(k));
+                    if (overlap > max_overlap) max_overlap = overlap;
+                }
+                if (max_overlap >= 0.45) true_positives++;
+            }
+            int false_positives = rects.size() - true_positives;
+            int false_negatives = truth_rects.size() - true_positives;
+            double recall = recall_score(true_positives, false_positives, false_negatives);
+            return recall;
+        }
+        double both_precision_score(vector<Rect> rects)  {
+            int true_positives = 0;
+            for (int j = 0; j < truth_rects.size(); j++) {
+                double max_overlap = 0.0;
+                for (int k = 0; k < rects.size(); k++) {
+                    double overlap = percentage_overlap(truth_rects.at(j), rects.at(k));
+                    if (overlap > max_overlap) max_overlap = overlap;
+                }
+                if (max_overlap >= 0.45) true_positives++;
+            }
+            int false_positives = rects.size() - true_positives;
+            int false_negatives = truth_rects.size() - true_positives;
+            double precision = precision_score(true_positives, false_positives, false_negatives);
+            return precision;
         }
 
     public:
         DartImage(string name) {
             this->name = name;
             image = imread("darts/" + this->name, IMREAD_GRAYSCALE);
+
+        }
+        DartImage(){
 
         }
 
@@ -67,34 +128,25 @@ class DartImage {
             return filtered_rects;
         }
         double calc_original_f1() {
-            int true_positives = 0;
-            for (int j = 0; j < truth_rects.size(); j++) {
-                double max_overlap = 0.0;
-                for (int k = 0; k < detected_rects.size(); k++) {
-                    double overlap = percentage_overlap(truth_rects.at(j), detected_rects.at(k));
-                    if (overlap > max_overlap) max_overlap = overlap;
-                }
-                if (max_overlap >= 0.45) true_positives++;
-            }
-            int false_positives = detected_rects.size() - true_positives;
-            int false_negatives = truth_rects.size() - true_positives;
-            double f1 = f1score(true_positives, false_positives, false_negatives);
-            return f1;
+            return both_f1_score(detected_rects);
         }
         double calc_new_f1() {
-            int true_positives = 0;
-            for (int j = 0; j < truth_rects.size(); j++) {
-                double max_overlap = 0.0;
-                for (int k = 0; k < filtered_rects.size(); k++) {
-                    double overlap = percentage_overlap(truth_rects.at(j), filtered_rects.at(k));
-                    if (overlap > max_overlap) max_overlap = overlap;
-                }
-                if (max_overlap >= 0.45) true_positives++;
-            }
-            int false_positives = filtered_rects.size() - true_positives;
-            int false_negatives = truth_rects.size() - true_positives;
-            double f1 = f1score(true_positives, false_positives, false_negatives);
-            return f1;
+            return both_f1_score(filtered_rects);
         }
+        double calc_original_recall() {
+            return both_recall_score(detected_rects);
+        }
+        double calc_new_recall() {
+            return both_recall_score(filtered_rects);
+        }
+
+        double calc_original_precision() {
+            return both_precision_score(detected_rects);
+        }
+        double calc_new_precision() {
+            return both_precision_score(filtered_rects);
+        }
+
+        
             
 };
