@@ -42,7 +42,7 @@ vector<DartImage> set_rects(vector<vector<string> > data) {
             int w = stoi(data.at(i).at((j*4)+3));
             int h = stoi(data.at(i).at((j*4)+4));
             dartImage.addTruthRect(Rect(x, y, w, h));
-            dartImage.setDetectedRects()
+            dartImage.setDetectedRects();
 
         }
         dartImages.push_back(dartImage);

@@ -43,4 +43,7 @@ class DartImage {
         void setFilteredRects(vector<Rect> filteredRects)  {
             filtered_rects = filteredRects;
         }
+        vector<Rect> getFilteredRects()  {
+            return filteredRects;
+        }
 };
