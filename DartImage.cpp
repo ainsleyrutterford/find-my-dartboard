@@ -54,14 +54,11 @@ class DartImage {
             if (!cascade.load(cascade_name)) printf("--(!)Error loading\n");
             Mat equalised;
             image.copyTo(equalised);
-            imwrite("Test.jpg", image);
-            imwrite("Test1.jpg", equalised);
 
 	        equalizeHist(image, equalised);
             cascade.detectMultiScale(equalised, detected_rects, 
                                      1.1, 1, 0|CV_HAAR_SCALE_IMAGE, Size(50, 50), Size(500,500));
             this->detected_rects = detected_rects;
-            printf("detectedRects %lu\n", detected_rects.size());
         }
         void setFilteredRects(vector<Rect> filtered_rects)  {
             this->filtered_rects = filtered_rects;
