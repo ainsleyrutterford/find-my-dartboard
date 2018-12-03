@@ -53,8 +53,8 @@ class DartImage {
             if (!cascade.load(cascade_name)) printf("--(!)Error loading\n");
             Mat equalised;
             image.copyTo(equalised);
-            imwrite("Test", image);
-            imwrite("Test1", equalised);
+            imwrite("Test.jpg", image);
+            imwrite("Test1.jpg", equalised);
 
 	        equalizeHist(image, equalised);
             cascade.detectMultiScale(equalised, detected_rects, 
