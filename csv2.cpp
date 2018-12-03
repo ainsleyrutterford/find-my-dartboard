@@ -294,12 +294,14 @@ int main(int n, char **args) {
         vector<Line> lines = houghTransformLines(dartImage.getImage(), grad_mag, grad_dir);
         vector<Circle> circles = HoughTransformCircles(dartImage.getImage(), grad_mag, grad_dir);
         vector<Rect> filtered_rects = update_detections(dartImage.getDetectedRects(), circles, lines);
-
         write_hough_info(dartImage.getImageName(), circles, lines, filtered_rects);
 
         dartImage.setFilteredRects(filtered_rects);
         origf1scores.push_back(dartImage.calc_original_f1());
         newf1scores.push_back(dartImage.calc_new_f1());
+        printf("Size of DR %lu\n", dartImage.getDetectedRects().size());
+        printf("Size of FR  %lu\n", dartImage.getFilteredRects().size());
+        printf("Size of TR %lu\n", dartImage.getTruthRects().size());
         cout << "image " << i << " done.\n";
     }
 
