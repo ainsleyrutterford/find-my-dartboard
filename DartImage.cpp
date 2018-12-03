@@ -7,7 +7,7 @@ using namespace cv;
 class DartImage {
     private:
         string name;
-        const Mat &image;
+        Mat image;
         vector<Rect> truth_rects, detected_rects, filtered_rects;
         String cascade_name = "dartcascade/cascade.xml";
         CascadeClassifier cascade;

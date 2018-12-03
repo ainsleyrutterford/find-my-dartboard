@@ -161,7 +161,7 @@ void fullLine(cv::Mat &img, cv::Point a, cv::Point b, cv::Scalar color, double m
     //  }
 }
 
-vector<Line> houghTransformLines(Mat &image, Mat &gradient_mag, Mat &gradient_dir)  {
+vector<Line> houghTransformLines(Mat image, Mat &gradient_mag, Mat &gradient_dir)  {
     Mat normalized;
     normalize(gradient_mag, normalized);
     //Shift negative angle values, so will always be in positive array location
