@@ -9,7 +9,7 @@ class DartImage {
         string name;
         Mat image;
         vector<Rect> truth_rects, detected_rects, filtered_rects;
-        String cascade_name = "dartcascade/cascade.xml";
+        String cascade_name = "HOG/cascade.xml";
         CascadeClassifier cascade;
 
         double percentage_overlap(Rect truth, Rect detected) {
