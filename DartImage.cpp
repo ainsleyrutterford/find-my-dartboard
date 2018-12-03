@@ -50,6 +50,7 @@ class DartImage {
             return detected_rects;
         }
         void setDetectedRects()  {
+            if (!cascade.load(cascade_name)) printf("--(!)Error loading\n");
             Mat equalised;
 	        equalizeHist(image, equalised);
             cascade.detectMultiScale(equalised, detected_rects, 
