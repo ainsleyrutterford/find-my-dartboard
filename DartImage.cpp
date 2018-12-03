@@ -140,7 +140,7 @@ class DartImage {
             return both_recall_score(detected_rects);
         }
         double calc_new_recall() {
-            printf("New recall %f\n", both_recall_score(detected_rects));
+            printf("New recall %f\n", both_recall_score(filtered_rects));
             return both_recall_score(filtered_rects);
         }
 
