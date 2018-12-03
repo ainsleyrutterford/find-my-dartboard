@@ -146,32 +146,7 @@ double f1score(double true_positives, double false_postives, double false_negati
     return f1;
 }
 
-vector<vector<double> > calc_f1scores(vector<vector<Rect> > truth_rects, vector<vector<Rect> > detected_rects) {
-    vector<vector<double> > f1scores;
-    for (int i = 0; i < detected_rects.size(); i++) {
-        int true_positives = 0;
-        for (int j = 0; j < truth_rects.at(i).size(); j++) {
-            double max_overlap = 0.0;
-            for (int k = 0; k < detected_rects.at(i).size(); k++) {
-                Rect truth = truth_rects.at(i).at(j);
-                Rect detected = detected_rects.at(i).at(k);
-                double overlap = percentage_overlap(truth, detected);
-                if (overlap > max_overlap) max_overlap = overlap;
-            }
-            if (max_overlap >= 0.45) true_positives++;
-        }
-        int false_positives = detected_rects.at(i).size() - true_positives;
-        int false_negatives = truth_rects.at(i).size() - true_positives;
-        double f1 = f1score(true_positives, false_positives, false_negatives);
-        vector<double> row;
-        row.push_back(true_positives);
-        row.push_back(false_positives);
-        row.push_back(false_negatives);
-        row.push_back(f1);
-        f1scores.push_back(row);
-    }
-    return f1scores;
-}
+
 
 void print_f1scores(vector<vector<double> > f1scores) {
     for (int i = 0; i < f1scores.size(); i++) {
@@ -312,26 +287,36 @@ int main(int n, char **args) {
 
     Mat grad_dir, grad_mag;
     vector<vector<Rect> > new_rects;
-
+    vector<double> origf1scores;
+    vector<double> newf1scores;
     for (int i = 0; i < dartImages.size(); i++) {
         DartImage dartImage = dartImages.at(i);
         getGradients(dartImage.getImage(), grad_mag, grad_dir);
-        vector<Line> lines = houghTransformLines(&dartImage.getImage(), grad_mag, grad_dir);
+        vector<Line> lines = houghTransformLines(dartImage.getImage(), grad_mag, grad_dir);
         vector<Circle> circles = HoughTransformCircles(dartImage.getImage(), grad_mag, grad_dir);
         vector<Rect> filtered_rects = update_detections(dartImage.getDetectedRects(), circles, lines);
 
         write_hough_info(dartImage.getImageName(), circles, lines, filtered_rects);
 
         dartImage.setFilteredRects(filtered_rects);
+        origf1scores.push_back(dartImage.calc_original_f1());
+        newf1scores.push_back(dartImage.calc_new_f1());
         cout << "image " << i << " done.\n";
     }
 
+    double sumNewF1 = 0.0;
+    double sumOrigF1 = 0.0;
 
-    vector<vector<double> > original_f1scores = calc_f1scores(dartImages.at(i).getTruthRects(), (dartImages.at(i).getDetectedRects());
-    vector<vector<double> > filtered_f1scores = calc_f1scores(dartImages.at(i).getTruthRects(), (dartImages.at(i).getFilteredRects());
+    for (int i = 0; i < original_f1scores.size(); i++)  {
+        sumNewF1  += newf1scores.at(i);
+        sumOrigF1 += origf1scores.at(i);
+    }
+    printf("Original F1 Score %f\n", sumOrigF1);
+    printf("New F1 Score %f\n", sumNewF1);
 
-    print_f1scores(original_f1scores);
-    print_f1scores(filtered_f1scores);
+
+    // print_f1scores(original_f1scores);
+    // print_f1scores(filtered_f1scores);
 
     write_images(dartImages);
 }

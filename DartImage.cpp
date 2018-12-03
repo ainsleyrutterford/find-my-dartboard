@@ -11,6 +11,23 @@ class DartImage {
         vector<Rect> truth_rects, detected_rects, filtered_rects;
         String cascade_name = "dartcascade/cascade.xml";
         CascadeClassifier cascade;
+
+        double percentage_overlap(Rect truth, Rect detected) {
+            Rect intersect = truth & detected;
+            double biggest_area = max(truth.area(), detected.area());
+            double intersect_area = intersect.area();
+            double overlap = intersect_area/biggest_area;
+            return overlap;
+        }
+
+        double f1score(double true_positives, double false_postives, double false_negatives) {
+            double precision = true_positives / (true_positives + false_postives);
+            double recall = true_positives / (true_positives + false_negatives);
+            if (true_positives ==  0) return 0;
+            double f1 = 2 * precision * recall / (precision + recall);
+            return f1;
+        }
+
     public:
         DartImage(string name) {
             this->name = name;
@@ -46,4 +63,35 @@ class DartImage {
         vector<Rect> getFilteredRects()  {
             return filtered_rects;
         }
+        double calc_original_f1() {
+            int true_positives = 0;
+            for (int j = 0; j < truth_rects.size(); j++) {
+                double max_overlap = 0.0;
+                for (int k = 0; k < detected_rects.size(); k++) {
+                    double overlap = percentage_overlap(truth_rects.at(j), detected_rects.at(k));
+                    if (overlap > max_overlap) max_overlap = overlap;
+                }
+                if (max_overlap >= 0.45) true_positives++;
+            }
+            int false_positives = detected_rects.at(i).size() - true_positives;
+            int false_negatives = truth_rects.at(i).size() - true_positives;
+            double f1 = f1score(true_positives, false_positives, false_negatives);
+            return f1;
+        }
+        double calc_new_f1() {
+            int true_positives = 0;
+            for (int j = 0; j < truth_rects.size(); j++) {
+                double max_overlap = 0.0;
+                for (int k = 0; k < filtered_rects.size(); k++) {
+                    double overlap = percentage_overlap(truth_rects.at(j), filtered_rects.at(k));
+                    if (overlap > max_overlap) max_overlap = overlap;
+                }
+                if (max_overlap >= 0.45) true_positives++;
+            }
+            int false_positives = filtered_rects.at(i).size() - true_positives;
+            int false_negatives = truth_rects.at(i).size() - true_positives;
+            double f1 = f1score(true_positives, false_positives, false_negatives);
+            return f1;
+        }
+            
 };
