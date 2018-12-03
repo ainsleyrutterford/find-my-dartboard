@@ -30,16 +30,6 @@ vector<vector<string> > readCSV(string filename) {
     return M;
 }
 
-void write(const vector<vector<string> > &M) {
-    const int w = 12;
-    for (int i = 0; i < M.size(); i++) {
-        for (int j = 0; j < M.at(i).size(); j++) {
-            cout << setw(w) << M.at(i).at(j) << ' ';
-        }
-        cout << '\n';
-    }
-}
-
 vector<vector<Rect> > find_truth_rects(vector<vector<string> > data) {
     vector<vector<Rect> > rects;
     for (int i = 0; i < data.size(); i++) {
@@ -216,13 +206,6 @@ void print_f1scores(vector<vector<double> > f1scores) {
     cout << "Average f1 score: " << ave << "\n";
 }
 
-Point intersection(int m0, int m1, int c0, int c1)  {
-    if(m0-m1==0)  return Point(-1, -1);
-    int x =(c1-c0)/(m0-m1);
-    int y = m0*x+c0;
-    return Point(x, y);
-}
-
 vector<Rect> filterRects(vector<Rect> detectedRects, vector<Circle> circles, vector<Line> lines)  {
     printf("Circle size: %lu  Lines Size: %lu  Det Rect Size: %lu\n", circles.size(), lines.size(), detectedRects.size());
     vector<Rect> filteredRects1;
@@ -244,8 +227,7 @@ vector<Rect> filterRects(vector<Rect> detectedRects, vector<Circle> circles, vec
     for (int i = 0; i < filteredRects1.size(); i++)  {
         for (int l=0; l < lines.size(); l++)  {
             for (int l1=1; l1 < lines.size(); l1++)  {
-                 if (filteredRects1.at(i).contains(
-                     intersection(lines.at(l).m,lines.at(l1).m, lines.at(l).c, lines.at(l1).c)))
+                 if (filteredRects1.at(i).contains(lines.at(l).getIntersection(lines.at(l1)))
                     intersectionCounts[i]++;
             }
         }

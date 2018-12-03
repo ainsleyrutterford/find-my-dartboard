@@ -198,9 +198,9 @@ vector<Line> houghTransformLines(Mat &image, Mat &gradient_mag, Mat &gradient_di
             if (hough_out.at<uchar>(p, t) > 40) {
                 double m = - cos(t * M_PI / 180) / sin(t * M_PI / 180);
                 double c = (p - min) / sin(t * M_PI / 180);
-                Point p1(200, round(m * 200 + c));  //y = mx + c
-                Point p2(300, round(m * 300 + c));
                 Line line = Line(m, c);
+                Point p1(200, line.getY(200)); 
+                Point p2(300, line.getY(300));
                 lines.push_back(line);
             }
         }
