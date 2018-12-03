@@ -27,8 +27,8 @@ class Line {
 
     double distance_to_line( Rect r ){
         Point begin(r.x, getY(r.x));
-        Point end(r.x+r.width, getY(r.x+r.width)),
-        Point rect_center(r.x+r.width/2, r.y+r.height/2)
+        Point end(r.x+r.width, getY(r.x+r.width));
+        Point rect_center(r.x+r.width/2, r.y+r.height/2);
 
         //translate the begin to the origin
         end -= begin;
