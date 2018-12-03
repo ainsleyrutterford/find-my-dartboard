@@ -307,12 +307,12 @@ int main(int n, char **args) {
     double sumNewF1 = 0.0;
     double sumOrigF1 = 0.0;
 
-    for (int i = 0; i < original_f1scores.size(); i++)  {
+    for (int i = 0; i < origf1scores.size(); i++)  {
         sumNewF1  += newf1scores.at(i);
         sumOrigF1 += origf1scores.at(i);
     }
-    printf("Original F1 Score %f\n", sumOrigF1);
-    printf("New F1 Score %f\n", sumNewF1);
+    printf("Original F1 Score %f\n", sumOrigF1/origf1scores.size());
+    printf("New F1 Score %f\n", sumNewF1/newf1scores.size());
 
 
     // print_f1scores(original_f1scores);
