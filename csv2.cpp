@@ -314,14 +314,15 @@ int main(int n, char **args) {
     vector<vector<Rect> > new_rects;
 
     for (int i = 0; i < dartImages.size(); i++) {
-        getGradients(dartImages.at(i).getImage(), grad_mag, grad_dir);
-        vector<Line> lines = houghTransformLines(image, grad_mag, grad_dir);
-        vector<Circle> circles = HoughTransformCircles(image, grad_mag, grad_dir);
-        vector<Rect> filtered_rects = update_detections(dartImages.at(i).getDetectedRects(), circles, lines);
+        DartImage dartImage = dartImages.at(i);
+        getGradients(dartImage.getImage(), grad_mag, grad_dir);
+        vector<Line> lines = houghTransformLines(dartImage.getImage(), grad_mag, grad_dir);
+        vector<Circle> circles = HoughTransformCircles(dartImage.getImage(), grad_mag, grad_dir);
+        vector<Rect> filtered_rects = update_detections(dartImage.getDetectedRects(), circles, lines);
 
-        write_hough_info(dartImages.at(i).getImageName(), circles, lines, filtered_rects);
+        write_hough_info(dartImage.getImageName(), circles, lines, filtered_rects);
 
-        dartImages.at(i).setFilteredRects(filtered_rects);
+        dartImage.setFilteredRects(filtered_rects);
         cout << "image " << i << " done.\n";
     }
 
