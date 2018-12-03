@@ -31,6 +31,7 @@ class DartImage {
         double recall_score(double true_positives, double false_positives, double false_negatives) {
             double recall = true_positives / (true_positives + false_negatives);
             if (true_positives == 0 || true_positives + false_negatives ==  0) return 0;
+
             return recall;
         }
 
@@ -82,6 +83,7 @@ class DartImage {
             }
             int false_positives = rects.size() - true_positives;
             int false_negatives = truth_rects.size() - true_positives;
+
             double precision = precision_score(true_positives, false_positives, false_negatives);
             return precision;
         }
@@ -134,16 +136,20 @@ class DartImage {
             return both_f1_score(filtered_rects);
         }
         double calc_original_recall() {
+            printf("Orig recall %f\n", both_recall_score(detected_rects));
             return both_recall_score(detected_rects);
         }
         double calc_new_recall() {
+            printf("New recall %f\n", both_recall_score(detected_rects));
             return both_recall_score(filtered_rects);
         }
 
         double calc_original_precision() {
+            printf("Orig precision %f\n", both_precision_score(detected_rects));
             return both_precision_score(detected_rects);
         }
         double calc_new_precision() {
+            printf("New precision %f\n", both_precision_score(filtered_rects));
             return both_precision_score(filtered_rects);
         }
 
