@@ -32,6 +32,8 @@ class DartImage {
         DartImage(string name) {
             this->name = name;
             image = imread(name, IMREAD_GRAYSCALE);
+            imwrite("Test3.jpg", image);
+
         }
 
         string getImageName()  {
