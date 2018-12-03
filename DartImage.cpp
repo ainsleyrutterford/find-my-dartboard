@@ -30,9 +30,8 @@ class DartImage {
 
     public:
         DartImage(string name) {
-            this->name = name;
+            this->name = "darts/" + name;
             image = imread(name, IMREAD_GRAYSCALE);
-            imwrite("Test3.jpg", image);
 
         }
 
