@@ -220,25 +220,7 @@ double distance_to_line( Point begin, Point end, Point x ){
    return abs(area / norm(end));
 }
 
-vector<Rect> remove_duplicate_rects(vector<Rect> rects) {
-    cout << "input amount of rects: " << rects.size() << "\n";
-    vector<Rect> no_duplicates;
-    for (int i = 0; i < rects.size(); i++) {
-        bool no_identicals = true;
-        Rect r1 = rects.at(i);
-        for (int j = 0; j < no_duplicates.size() && !no_identicals; j++) {
-            Rect r2 = no_duplicates.at(j);
-            if (r1 == r2) no_identicals = false;
-        }
-        no_duplicates.push_back(r1);
-    }
-    cout << "output amount of rects: " << no_duplicates.size() << "\n";
-    return no_duplicates;
-}
-
 vector<Rect> update_detections(vector<Rect> detected_rects, vector<Circle> circles, vector<Line> lines) {
-
-    detected_rects = remove_duplicate_rects(detected_rects);
 
     vector<int> circle_votes, line_votes, line_votes2;
     int inner_circle_of[circles.size()];
