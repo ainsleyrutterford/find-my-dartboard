@@ -32,7 +32,7 @@ class DartImage {
         DartImage(string name) {
             this->name = "darts/" + name;
             image = imread(name, IMREAD_GRAYSCALE);
-            printf("%s\n", name);
+            printf("%s\n", name.c_str());
 
         }
 
