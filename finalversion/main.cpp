@@ -41,18 +41,18 @@ DartImage set_rect(vector<vector<string> > data, int imageNumber) {
         dartImage.setDetectedRects();
 
     }
-    
+
     return dartImage;
 }
 
 void write_images(DartImage dartImage) {
-    string filename = "darts/" + dartImage.getImageName();
+    string filename = dartImage.getImageName();
     Mat frame = imread(filename, CV_LOAD_IMAGE_COLOR);
     for (int j = 0; j < dartImage.getFilteredRects().size(); j++) {
         rectangle(frame, dartImage.getFilteredRects().at(j), Scalar(0, 255, 0), 2);
     }
     imwrite("filtered" + dartImage.getImageName(), frame);
-    
+
 }
 
 void write_hough_info(string image_name, vector<Circle> circles, vector<Line> lines, vector<Rect> rects) {
@@ -75,7 +75,6 @@ void write_hough_info(string image_name, vector<Circle> circles, vector<Line> li
     imwrite("everything" + image_name, frame);
 }
 
-
 double percentage_overlap(Rect truth, Rect detected) {
     Rect intersect = truth & detected;
     double biggest_area = max(truth.area(), detected.area());
@@ -91,9 +90,6 @@ double one_way_overlap(Rect bigger, Rect smaller) {
     double overlap = intersect_area/smaller_area;
     return overlap;
 }
-
-
-
 
 vector<Rect> update_detections(vector<Rect> detected_rects, vector<Circle> circles, vector<Line> lines) {
 
@@ -188,7 +184,7 @@ int main(int n, char **args) {
     vector<Rect> filtered_rects = update_detections(dartImage.getDetectedRects(), circles, lines);
     write_hough_info(dartImage.getImageName(), circles, lines, filtered_rects);
     dartImage.setFilteredRects(filtered_rects);
-    
+
     cout << "image " << atoi(args[1]) << " done.\n"<< "\n";
 
     printf("Original Recall Score %f\n", dartImage.calc_original_recall());

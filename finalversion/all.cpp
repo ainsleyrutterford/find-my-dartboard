@@ -49,7 +49,7 @@ vector<DartImage> set_rects(vector<vector<string> > data) {
 
 void write_images(vector<DartImage> dartImages) {
     for (int i = 0; i < dartImages.size(); i++) {
-        string filename = "darts/" + dartImages.at(i).getImageName();
+        string filename = dartImages.at(i).getImageName();
         Mat frame = imread(filename, CV_LOAD_IMAGE_COLOR);
         for (int j = 0; j < dartImages.at(i).getFilteredRects().size(); j++) {
             rectangle(frame, dartImages.at(i).getFilteredRects().at(j), Scalar(0, 255, 0), 2);

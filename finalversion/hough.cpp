@@ -148,7 +148,7 @@ void fullLine(cv::Mat &img, cv::Point a, cv::Point b, cv::Scalar color, double m
     //             } else {
     //                 p0 = Point(x, y);
     //                 p1 = Point(x, y);
-                    
+
     //             }
     //         } else {
     //             line(img,p0,p1,color,1,8,0);
@@ -156,7 +156,7 @@ void fullLine(cv::Mat &img, cv::Point a, cv::Point b, cv::Scalar color, double m
     //             p1 =Point(-1, -1);
     //         }
     //     }
-        
+
     //  }
 }
 
@@ -173,7 +173,7 @@ vector<Line> houghTransformLines(Mat image, Mat &gradient_mag, Mat &gradient_dir
                 for (double t = 0; t < hough_space.cols; t++) {
                     double b2w_angle = gradient_dir.at<double>(y, x)+2*M_PI;
                     double w2b_angle = gradient_dir.at<double>(y, x) + M_PI;
-                    if(b2w_angle >= 2*M_PI) b2w_angle -= 2*M_PI; 
+                    if(b2w_angle >= 2*M_PI) b2w_angle -= 2*M_PI;
 
                     if (abs(b2w_angle*180/M_PI - t)  <= 0.5) {
                         int p = (int)(x * cos(t*M_PI/180) + y * sin(t*M_PI/180)) + min;
@@ -198,7 +198,7 @@ vector<Line> houghTransformLines(Mat image, Mat &gradient_mag, Mat &gradient_dir
                 double m = - cos(t * M_PI / 180) / sin(t * M_PI / 180);
                 double c = (p - min) / sin(t * M_PI / 180);
                 Line line = Line(m, c);
-                Point p1(200, line.getY(200)); 
+                Point p1(200, line.getY(200));
                 Point p2(300, line.getY(300));
                 lines.push_back(line);
             }
@@ -284,5 +284,3 @@ vector<Circle> HoughTransformCircles(Mat image, Mat &gradient_mag, Mat &gradient
     free3d(houghSpace, image.rows, image.cols, rLen);
     return filterCircles;
 }
-
-
